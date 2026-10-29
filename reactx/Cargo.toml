@@ -1,0 +1,24 @@
+[package]
+name = "reactx"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "A React-style TUI framework built on Dioxus, Taffy and Ratatui"
+keywords = ["tui", "terminal", "dioxus", "ui", "framework"]
+categories = ["command-line-interface", "gui"]
+
+[dependencies]
+dioxus.workspace = true
+reactx-core.workspace = true
+reactx-tui.workspace = true
+reactx-ui.workspace = true
+reactx-async.workspace = true
+reactx-router.workspace = true
+reactx-macro.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ratatui.workspace = true

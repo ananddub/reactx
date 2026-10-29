@@ -1,0 +1,18 @@
+[package]
+name = "reactx-macro"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "JSX syntax macro for ReactX, translating HTML-like tags into rsx!"
+keywords = ["tui", "jsx", "macro", "dioxus"]
+categories = ["development-tools::procedural-macro-helpers"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+rstml = "0.13"
+syn = { version = "3", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"

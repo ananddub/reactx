@@ -1,0 +1,13 @@
+[package]
+name = "reactx-ui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Themed widgets, data charts and layout components for ReactX"
+keywords = ["tui", "widgets", "charts", "theme"]
+categories = ["command-line-interface", "gui"]
+
+[dependencies]
+dioxus.workspace = true
+reactx-core.workspace = true

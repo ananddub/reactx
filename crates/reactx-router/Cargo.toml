@@ -1,0 +1,13 @@
+[package]
+name = "reactx-router"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "In-memory routing and navigation hooks for ReactX terminal apps"
+keywords = ["tui", "router", "navigation"]
+categories = ["command-line-interface"]
+
+[dependencies]
+dioxus.workspace = true
+reactx-ui.workspace = true
