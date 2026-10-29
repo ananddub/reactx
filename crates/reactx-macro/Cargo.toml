@@ -4,7 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "JSX syntax macro for ReactX, translating HTML-like tags into rsx!"
+license-file.workspace = true
+description = "JSX syntax macro for ReactX, translating HTML-like tags into Dioxus elements"
+readme = "../../README.md"
 keywords = ["tui", "jsx", "macro", "dioxus"]
 categories = ["development-tools::procedural-macro-helpers"]
 

@@ -4,7 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 description = "Themed widgets, data charts and layout components for ReactX"
+readme = "../../README.md"
 keywords = ["tui", "widgets", "charts", "theme"]
 categories = ["command-line-interface", "gui"]
 

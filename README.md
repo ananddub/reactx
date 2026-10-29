@@ -7,9 +7,9 @@ from [Dioxus](https://dioxuslabs.com) 0.6; layout is Flexbox via
 async work runs on [Tokio](https://tokio.rs).
 
 ```toml
-# Cargo.toml — inside this workspace; crates are not published yet
+# Cargo.toml
 [dependencies]
-reactx = { path = "reactx" }
+reactx = "0.1.0"      # { path = "reactx" } when developing inside this repo
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -861,3 +861,9 @@ test suite and the examples on every push and pull request.
 - Clipboard writes go through OSC 52 only; terminals that ignore it (or tmux
   without `set-clipboard on`) will not see the copied text.
 - The router keeps history in memory only; there is no OS/browser integration.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Every crate in the workspace (`reactx`,
+`reactx-core`, `reactx-tui`, `reactx-ui`, `reactx-async`, `reactx-router`,
+`reactx-macro`) ships under the same license.

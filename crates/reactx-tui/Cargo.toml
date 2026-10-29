@@ -4,7 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 description = "Terminal backend and renderer for ReactX, built on Dioxus, Taffy and Ratatui"
+readme = "../../README.md"
 keywords = ["tui", "terminal", "dioxus", "ratatui", "renderer"]
 categories = ["command-line-interface", "gui"]
 

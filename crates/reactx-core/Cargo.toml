@@ -4,7 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 description = "Core node tree, styles, events and wire formats for ReactX"
+readme = "../../README.md"
 keywords = ["tui", "terminal", "dioxus", "ui"]
 categories = ["command-line-interface", "gui"]
 

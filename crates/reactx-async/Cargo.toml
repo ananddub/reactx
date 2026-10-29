@@ -4,7 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 description = "Async fetch and WebSocket hooks for ReactX"
+readme = "../../README.md"
 keywords = ["tui", "async", "fetch", "websocket"]
 categories = ["asynchronous", "network-programming"]
 
