@@ -33,31 +33,19 @@ impl TuiRenderer {
             return;
         };
         let normalized = name.trim().to_ascii_lowercase().replace('-', "_");
-        if normalized == "style" {
-            let mut keys: Vec<String> = Vec::new();
-            if let Some(value) = value {
-                for declaration in value.split(';') {
-                    if let Some((key, value)) = declaration.split_once(':') {
-                        let key = key.trim();
-                        if key.is_empty() {
-                            continue;
-                        }
-                        node.attrs.apply_attr(key, value.trim());
-                        keys.push(key.to_ascii_lowercase().replace('-', "_"));
-                    }
+        match normalized.as_str() {
+            "class" => node.class = value.filter(|v| !v.is_empty()).map(str::to_string),
+            "style" => node.style = value.filter(|v| !v.is_empty()).map(str::to_string),
+            _ => match value {
+                Some(value) => {
+                    node.base_attrs.apply_attr(name, value);
+                    node.attrs.apply_attr(name, value);
                 }
-            }
-            for stale in std::mem::take(&mut node.style_keys) {
-                if !keys.contains(&stale) {
-                    node.attrs.clear_attr(&stale);
+                None => {
+                    node.base_attrs.clear_attr(name);
+                    node.attrs.clear_attr(name);
                 }
-            }
-            node.style_keys = keys;
-            return;
-        }
-        match value {
-            Some(value) => node.attrs.apply_attr(name, value),
-            None => node.attrs.clear_attr(name),
+            },
         }
     }
 

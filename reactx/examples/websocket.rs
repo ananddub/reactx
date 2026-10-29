@@ -24,32 +24,32 @@ fn App() -> Element {
     let state = use_websocket::<Trade>("wss://stream.binance.com:9443/ws/btcusdt@trade");
 
     let stream = match &*state.read() {
-        SocketState::Connecting => jsx! { <Text dim>Connecting...</Text> },
-        SocketState::Open => jsx! { <Text dim>Connected, waiting for trades...</Text> },
+        SocketState::Connecting => jsx! { <span class="dim">Connecting...</span> },
+        SocketState::Open => jsx! { <span class="dim">Connected, waiting for trades...</span> },
         SocketState::Message(trade) => {
             let headline = format!("{}  {}", trade.symbol, trade.price);
             let quantity = format!("Last quantity: {}", trade.quantity);
             jsx! {
-                <Text color="#a6e3a1" bold>{headline}</Text>
-                <Text dim>{quantity}</Text>
+                <span class="text-green-300 bold">{headline}</span>
+                <span class="dim">{quantity}</span>
             }
         }
         SocketState::Closed(reason) => {
             let message = format!("Stream closed: {reason}");
-            jsx! { <Text color="#f9e2af">{message}</Text> }
+            jsx! { <span class="text-yellow-300">{message}</span> }
         }
         SocketState::Failed(error) => {
             let message = format!("Stream failed: {error}");
-            jsx! { <Text color="#f38ba8">{message}</Text> }
+            jsx! { <span class="text-rose-400">{message}</span> }
         }
     };
 
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#89b4fa" padding="1" gap={Some(1)}>
-                <Text bold>BTC/USDT live trades</Text>
+            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+                <span class="bold">BTC/USDT live trades</span>
                 {stream}
-                <Text dim>Feed: Binance. Ctrl+C to quit.</Text>
+                <span class="dim">Feed: Binance. Ctrl+C to quit.</span>
             </Container>
         </ThemeProvider>
     }

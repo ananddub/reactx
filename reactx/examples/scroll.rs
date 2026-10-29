@@ -24,24 +24,18 @@ fn App() -> Element {
     let first = offset() as usize + 1;
     let last = (offset() + INNER_HEIGHT).min(ROWS as u16) as usize;
 
-    let view_style = format!(
-        "direction:column;flex-grow:1;height:100%;overflow:hidden;\
-         border:single;title:rows {first}..{last} of {ROWS};padding:0 1;scroll-y:{offset}"
-    );
+    let view_style = format!("title:rows {first}..{last} of {ROWS};scroll-y:{offset}");
 
     jsx! {
         <ThemeProvider>
             <Container
-                border="rounded"
-                border-color="#89b4fa"
-                padding="1"
-                gap={Some(1)}
-                height="100%"
+                class="flex flex-col border border-blue-300 rounded p-1 gap-1 h-full"
                 title="Scroll containers"
             >
-                <Text bold>Wheel over the list, or use Up/Down, PgUp/PgDn, Home/End.</Text>
-                <div style="direction:row;gap:1;height:{VIEW_HEIGHT}">
+                <span class="bold">Wheel over the list, or use Up/Down, PgUp/PgDn, Home/End.</span>
+                <div class={format!("flex flex-row gap-1 h-[{VIEW_HEIGHT}]")}>
                     <div
+                        class="flex flex-col grow h-full overflow-hidden border px-1"
                         style={view_style}
                         onwheel=move |event| {
                             let dy = event.delta().strip_units().y;
@@ -61,10 +55,10 @@ fn App() -> Element {
                         }
                     >
                         {(0..ROWS).map(|index| jsx! {
-                            <div key="{index}" style="direction:row;gap:1">
-                                <span style="color:#6c7086">{format!("{:02}", index + 1)}</span>
+                            <div key="{index}" class="flex flex-row gap-1">
+                                <span class="text-slate-500">{format!("{:02}", index + 1)}</span>
                                 <span
-                                    style={if index % 2 == 0 { "color:#cdd6f4" } else { "color:#a6adc8" }}
+                                    class={if index % 2 == 0 { "text-slate-200" } else { "text-slate-400" }}
                                 >
                                     entry {index + 1}{" — scrollable content that never leaves the tree"}
                                 </span>
@@ -73,10 +67,10 @@ fn App() -> Element {
                     </div>
                     <Scrollbar position={offset() as usize} content_length={ROWS} />
                 </div>
-                <div style="direction:row;gap:2">
+                <div class="flex flex-row gap-2">
                     <Button on_click=move |_| offset.set(0)>Top</Button>
                     <Button on_click=move |_| offset.set(MAX_OFFSET)>Bottom</Button>
-                    <Text dim>{format!("clip: {}..{}", offset(), offset() + INNER_HEIGHT)}</Text>
+                    <span class="dim">{format!("clip: {}..{}", offset(), offset() + INNER_HEIGHT)}</span>
                 </div>
             </Container>
         </ThemeProvider>

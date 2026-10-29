@@ -42,6 +42,9 @@ pub fn Chart(
     #[props(default)] y_labels: Option<Vec<String>>,
     #[props(default)] title: String,
     #[props(default)] border: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let records: Vec<Vec<String>> = datasets
@@ -72,6 +75,6 @@ pub fn Chart(
     border_style(&mut style, &border, &theme);
 
     rsx! {
-        div { style: style }
+        div { class: class, style: style }
     }
 }

@@ -99,6 +99,7 @@ pub(super) struct TuiWheelEvent {
     pub(super) y: f64,
     pub(super) delta_x: f64,
     pub(super) delta_y: f64,
+    pub(super) modifiers: Modifiers,
 }
 
 impl InteractionLocation for TuiWheelEvent {
@@ -123,7 +124,7 @@ impl InteractionElementOffset for TuiWheelEvent {
 
 impl ModifiersInteraction for TuiWheelEvent {
     fn modifiers(&self) -> Modifiers {
-        Modifiers::empty()
+        self.modifiers
     }
 }
 

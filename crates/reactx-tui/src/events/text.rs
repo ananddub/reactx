@@ -1,10 +1,42 @@
-//! Selection, clipboard and paste handling for text fields.
+//! Selection, clipboard events and paste handling for text fields.
+
+use std::any::Any;
+use std::rc::Rc;
 
 use dioxus_core::VirtualDom;
-use reactx_core::NodeId;
+use dioxus_html::{HasClipboardData, PlatformEventData};
+use reactx_core::{NodeId, NodeTree};
 
-use super::dispatch::dispatch_form;
+use super::dispatch::{dispatch_chain_default, dispatch_form};
 use crate::TuiRenderer;
+
+/// Payload of `oncopy`, `oncut` and `onpaste`.
+///
+/// Read the clipboard text from a handler with
+/// `event.data().downcast::<TuiClipboardEvent>()`.
+#[derive(Clone)]
+pub struct TuiClipboardEvent {
+    pub text: Option<String>,
+}
+
+impl HasClipboardData for TuiClipboardEvent {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+/// Raise a clipboard event on the node and report whether handlers left the
+/// default clipboard action enabled.
+fn dispatch_clipboard(
+    dom: &VirtualDom,
+    tree: &NodeTree,
+    node: NodeId,
+    name: &str,
+    text: Option<String>,
+) -> bool {
+    let data = PlatformEventData::new(Box::new(TuiClipboardEvent { text }));
+    dispatch_chain_default(dom, tree, node, name, Rc::new(data))
+}
 
 fn focused_text_node(renderer: &TuiRenderer) -> Option<NodeId> {
     let id = renderer.focus.focused_id()?;
@@ -24,20 +56,36 @@ fn selected_text(renderer: &TuiRenderer, id: NodeId) -> Option<String> {
     Some(value.chars().skip(start).take(end - start).collect())
 }
 
-/// Copy the focused input's selection. Returns false when there is none.
-pub(super) fn copy_selection(renderer: &mut TuiRenderer) -> bool {
-    let Some(id) = focused_text_node(renderer) else {
+/// Copy the focused selection after `oncopy` runs. Returns false when Ctrl+C
+/// should fall through to quitting: nothing was selected and no handler
+/// consumed the event.
+pub(super) fn copy_selection(dom: &VirtualDom, renderer: &mut TuiRenderer) -> bool {
+    let Some(id) = renderer.focus.focused_id() else {
         return false;
     };
-    let Some(text) = selected_text(renderer, id) else {
-        return false;
+    let is_text = renderer
+        .tree
+        .get(id)
+        .is_some_and(crate::layout::is_text_input);
+    let text = if is_text {
+        selected_text(renderer, id)
+    } else {
+        None
     };
-    crate::clipboard::copy(&text);
-    renderer.clipboard = Some(text);
-    true
+    if !dispatch_clipboard(dom, &renderer.tree, id, "copy", text.clone()) {
+        return true;
+    }
+    match text {
+        Some(text) => {
+            crate::clipboard::copy(&text);
+            renderer.clipboard = Some(text);
+            true
+        }
+        None => false,
+    }
 }
 
-/// Copy and delete the focused input's selection.
+/// Copy and delete the focused input's selection after `oncut` runs.
 pub(super) fn cut_selection(dom: &VirtualDom, renderer: &mut TuiRenderer) {
     let Some(id) = focused_text_node(renderer) else {
         return;
@@ -45,7 +93,11 @@ pub(super) fn cut_selection(dom: &VirtualDom, renderer: &mut TuiRenderer) {
     let Some((start, end)) = renderer.selection(id) else {
         return;
     };
-    if let Some(text) = selected_text(renderer, id) {
+    let text = selected_text(renderer, id);
+    if !dispatch_clipboard(dom, &renderer.tree, id, "cut", text.clone()) {
+        return;
+    }
+    if let Some(text) = text {
         crate::clipboard::copy(&text);
         renderer.clipboard = Some(text);
     }
@@ -69,10 +121,18 @@ pub(super) fn paste(dom: &VirtualDom, renderer: &mut TuiRenderer, text: &str) {
     let Some(node) = renderer.tree.get(node_id) else {
         return;
     };
-    if !crate::layout::is_text_input(node) {
+    let is_text = crate::layout::is_text_input(node);
+    let multiline = crate::layout::is_textarea(node);
+    if !dispatch_clipboard(
+        dom,
+        &renderer.tree,
+        node_id,
+        "paste",
+        Some(text.to_string()),
+    ) || !is_text
+    {
         return;
     }
-    let multiline = crate::layout::is_textarea(node);
     let mut chars: Vec<char> = node
         .attrs
         .value

@@ -15,6 +15,9 @@ pub fn Input(
     #[props(default)] placeholder: String,
     #[props(default)] label: String,
     #[props(default)] disabled: bool,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let mut style = String::new();
@@ -27,6 +30,7 @@ pub fn Input(
     let submitted = value.clone();
     let field = rsx! {
         input {
+            class: class,
             style: style,
             value: value,
             placeholder: placeholder,
@@ -66,6 +70,9 @@ pub fn TextArea(
     #[props(default)] label: String,
     #[props(default)] height: Option<u16>,
     #[props(default)] disabled: bool,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let mut style = String::new();
@@ -83,6 +90,7 @@ pub fn TextArea(
     let submitted = value.clone();
     let field = rsx! {
         textarea {
+            class: class,
             style: style,
             value: value,
             placeholder: placeholder,

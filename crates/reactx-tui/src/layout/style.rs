@@ -1,10 +1,13 @@
 //! Taffy style conversion from terminal style props.
 
-use reactx_core::{Align, Dim, Edges, FlexDir, Justify, Overflow, Position, TuiNode};
+use reactx_core::{
+    Align, Dim, Edges, FlexDir, FlexWrap as WrapMode, Justify, Overflow, Position, TuiNode,
+};
 use taffy::geometry::{Point, Rect as TaffyRect};
 use taffy::prelude::*;
 use taffy::style::{
-    AlignItems, AlignSelf, Display, FlexDirection, JustifyContent, Overflow as TaffyOverflow,
+    AlignContent, AlignItems, AlignSelf, Display, FlexDirection, FlexWrap, JustifyContent,
+    Overflow as TaffyOverflow,
 };
 
 use super::leaf::is_text_input;
@@ -37,6 +40,22 @@ pub(super) fn taffy_style(node: &TuiNode, is_leaf: bool, is_root: bool) -> Style
         Justify::SpaceAround => JustifyContent::SpaceAround,
         Justify::SpaceEvenly => JustifyContent::SpaceEvenly,
     });
+
+    style.align_content = attrs.align_content.map(|justify| match justify {
+        Justify::Start => AlignContent::Start,
+        Justify::Center => AlignContent::Center,
+        Justify::End => AlignContent::End,
+        Justify::SpaceBetween => AlignContent::SpaceBetween,
+        Justify::SpaceAround => AlignContent::SpaceAround,
+        Justify::SpaceEvenly => AlignContent::SpaceEvenly,
+    });
+
+    style.flex_wrap = match attrs.flex_wrap.unwrap_or(WrapMode::NoWrap) {
+        WrapMode::NoWrap => FlexWrap::NoWrap,
+        WrapMode::Wrap => FlexWrap::Wrap,
+        WrapMode::WrapReverse => FlexWrap::WrapReverse,
+    };
+    style.flex_basis = dimension(attrs.flex_basis);
 
     style.align_items = attrs.align.map(|align| match align {
         Align::Start => AlignItems::Start,

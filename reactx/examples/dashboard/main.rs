@@ -31,10 +31,10 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container direction="column" padding="1" gap={Some(1)} height="100%">
-                <div style="direction:row;gap:1;align:center">
-                    <Text bold color="#89b4fa">ReactX Dashboard</Text>
-                    <span style="flex-grow:1" />
+            <Container class="flex flex-col p-1 gap-1 h-full">
+                <div class="flex flex-row gap-1 items-center">
+                    <span class="text-blue-300 bold">ReactX Dashboard</span>
+                    <span class="grow" />
                     <Button on_click=move |_| {
                         progress.set((progress() + 0.08).min(1.0));
                         let mut data = samples();
@@ -47,13 +47,13 @@ fn App() -> Element {
                     <Button variant="ghost" on_click=move |_| scroll.set((scroll() + 7) % 100)>Scroll</Button>
                 </div>
 
-                <Container direction="row" gap={Some(1)} height={top_height.to_string()}>
-                    <Container direction="column" gap={Some(1)} width="36">
+                <Container class={format!("flex flex-row gap-1 h-[{top_height}]")}>
+                    <Container class="flex flex-col gap-1 w-[36]">
                         <Gauge value={progress()} label={label} border="rounded" title="Sync progress" />
                         <Gauge value={progress()} use_line=true />
                         <Sparkline data={samples()} color="#f9e2af" title="CPU history" border="single" />
                     </Container>
-                    <Container direction="column" gap={Some(1)} flex_grow={Some(1.0)}>
+                    <Container class="flex flex-col gap-1 grow">
                         <BarChart
                             data={vec![
                                 ("Rust".to_string(), 95u64),
@@ -78,8 +78,8 @@ fn App() -> Element {
                     <Scrollbar position={scroll()} content_length={100usize} orientation="vertical-right" />
                 </Container>
 
-                <Container direction="row" gap={Some(1)} align="start" flex_grow={Some(1.0)}>
-                    <Container direction="column" flex_grow={Some(2.0)} height="100%">
+                <Container class="flex flex-row gap-1 items-start grow">
+                    <Container class="flex flex-col grow-[2] h-full">
                         <Chart
                             datasets={vec![latency, errors]}
                             x_bounds={(0.0, 12.0)}
@@ -89,7 +89,7 @@ fn App() -> Element {
                             border="single"
                         />
                     </Container>
-                    <Container direction="column" flex_grow={Some(1.0)} height="100%">
+                    <Container class="flex flex-col grow h-full">
                         <Canvas
                             x_bounds={(0.0, 80.0)}
                             y_bounds={(0.0, 20.0)}
@@ -110,7 +110,7 @@ fn App() -> Element {
                     />
                 </Container>
 
-                <Text dim>{"Click a day, Tab through buttons, Ctrl+C to quit."}</Text>
+                <span class="dim">{"Click a day, Tab through buttons, Ctrl+C to quit."}</span>
             </Container>
         </ThemeProvider>
     }

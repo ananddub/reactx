@@ -17,6 +17,9 @@ pub fn Table(
     #[props(default)] title: String,
     #[props(default)] border: String,
     #[props(default)] highlight_color: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let border = if border.is_empty() {
@@ -47,6 +50,6 @@ pub fn Table(
     border_style(&mut style, &border, &theme);
 
     rsx! {
-        div { style: style }
+        div { class: class, style: style }
     }
 }

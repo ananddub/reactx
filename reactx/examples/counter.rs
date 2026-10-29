@@ -12,13 +12,13 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#89b4fa" padding="1" gap={Some(1)}>
-                <Text color="#a6e3a1" bold>Count: {count}</Text>
-                <div style="direction:row;gap:1">
+            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+                <span class="text-green-300 bold">Count: {count}</span>
+                <div class="flex flex-row gap-1">
                     <Button on_click=move |_| count += 1>+1</Button>
                     <Button variant="danger" on_click=move |_| count -= 1>-1</Button>
                 </div>
-                <Text dim>Tab to focus, Enter or Space to activate, Ctrl+C to quit.</Text>
+                <span class="dim">Tab to focus, Enter or Space to activate, Ctrl+C to quit.</span>
             </Container>
         </ThemeProvider>
     }

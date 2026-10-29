@@ -20,6 +20,9 @@ pub fn Container(
     #[props(default)] height: Option<String>,
     #[props(default)] flex_grow: Option<f32>,
     #[props(default)] title: Option<String>,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
     children: Element,
 ) -> Element {
     let mut style = String::new();
@@ -54,6 +57,6 @@ pub fn Container(
     }
 
     rsx! {
-        div { style: style, {children} }
+        div { class: class, style: style, {children} }
     }
 }

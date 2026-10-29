@@ -16,6 +16,9 @@ pub fn Gauge(
     #[props(default)] bg: String,
     #[props(default)] title: String,
     #[props(default)] border: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let ratio = if value > 1.0 { value / 100.0 } else { value };
@@ -48,6 +51,6 @@ pub fn Gauge(
     border_style(&mut style, &border, &theme);
 
     rsx! {
-        div { style: style }
+        div { class: class, style: style }
     }
 }

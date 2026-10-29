@@ -70,6 +70,27 @@ impl Align {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FlexWrap {
+    #[default]
+    NoWrap,
+    Wrap,
+    WrapReverse,
+}
+
+impl FlexWrap {
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(
+            match s.trim().to_ascii_lowercase().replace('_', "-").as_str() {
+                "nowrap" | "no-wrap" => Self::NoWrap,
+                "wrap" => Self::Wrap,
+                "wrap-reverse" => Self::WrapReverse,
+                _ => return None,
+            },
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Position {
     #[default]
     Relative,

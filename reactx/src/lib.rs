@@ -3,14 +3,15 @@
 //! ```no_run
 //! use reactx::prelude::*;
 //!
-//! #[component]
 //! fn Dashboard() -> Element {
 //!     let mut count = use_signal(|| 0);
-//!     rsx! {
-//!         div { style: "direction:column;border:rounded;padding:1",
-//!             span { style: "color:#a6e3a1", "Count: {count}" }
-//!             Button { on_click: move |_| count += 1, "+1" }
-//!         }
+//!     jsx! {
+//!         <ThemeProvider>
+//!             <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+//!                 <span class="text-green-300 bold">Count: {count}</span>
+//!                 <Button on_click=move |_| count += 1>+1</Button>
+//!             </Container>
+//!         </ThemeProvider>
 //!     }
 //! }
 //!
@@ -36,12 +37,19 @@ pub use reactx_router::{
     match_route, navigate, routes, use_location, use_param, use_query, use_router, Link, Query,
     Route, RouteMatch, Router, RouterContext,
 };
-pub use reactx_tui::events::{handle_event, onmousedrag, Flow};
-pub use reactx_tui::{launch, restore_terminal, use_terminal_size, TuiRenderer};
+pub use reactx_tui::effects::{
+    fx, register_shader, screen_effects, tachyonfx, Color, Effect, Interpolation, Motion,
+    ScreenEffects,
+};
+pub use reactx_tui::events::{handle_event, onmousedrag, Flow, TuiClipboardEvent};
+pub use reactx_tui::{
+    launch, restore_terminal, use_animation_frame, use_color_tween, use_spring, use_terminal_focus,
+    use_terminal_size, use_ticker, use_tween, Spring, TuiRenderer, Tween,
+};
 pub use reactx_ui::{
-    use_theme, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset, Checkbox,
-    Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table, Tabs, Text,
-    TextArea, Theme, ThemeProvider,
+    use_theme, Animate, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset,
+    Checkbox, Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table, Tabs,
+    Text, TextArea, Theme, ThemeProvider,
 };
 pub use store::Store;
 
@@ -61,11 +69,18 @@ pub mod prelude {
         navigate, routes, use_location, use_param, use_query, use_router, Link, Query, Route,
         RouteMatch, Router, RouterContext,
     };
-    pub use reactx_tui::events::{handle_event, onmousedrag, Flow};
-    pub use reactx_tui::{launch, restore_terminal, use_terminal_size, TuiRenderer};
+    pub use reactx_tui::effects::{
+        fx, register_shader, screen_effects, tachyonfx, Color, Effect, Interpolation, Motion,
+        ScreenEffects,
+    };
+    pub use reactx_tui::events::{handle_event, onmousedrag, Flow, TuiClipboardEvent};
+    pub use reactx_tui::{
+        launch, restore_terminal, use_animation_frame, use_color_tween, use_spring,
+        use_terminal_focus, use_terminal_size, use_ticker, use_tween, Spring, TuiRenderer, Tween,
+    };
     pub use reactx_ui::{
-        use_theme, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset, Checkbox,
-        Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table, Tabs, Text,
-        TextArea, Theme, ThemeProvider,
+        use_theme, Animate, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset,
+        Checkbox, Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table,
+        Tabs, Text, TextArea, Theme, ThemeProvider,
     };
 }

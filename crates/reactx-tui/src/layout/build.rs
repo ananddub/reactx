@@ -29,14 +29,20 @@ pub(super) fn build(
 
     let mut children = Vec::new();
     if let Some(node) = node {
-        for child in &node.children {
-            if let Some(child_node) = tree.get(*child) {
+        let mut ordered = node.children.clone();
+        ordered.sort_by_key(|id| {
+            tree.get(*id)
+                .and_then(|child| child.attrs.order)
+                .unwrap_or(0)
+        });
+        for child in ordered {
+            if let Some(child_node) = tree.get(child) {
                 if child_node.is_placeholder() || child_node.is_hidden() {
                     continue;
                 }
                 let child_style =
                     taffy_style(child_node, leaf_for(tree, child_node).is_some(), false);
-                children.push(build(taffy, mapping, tree, *child, child_style));
+                children.push(build(taffy, mapping, tree, child, child_style));
             }
         }
     }

@@ -3,6 +3,7 @@
 
 #![allow(non_snake_case)]
 
+mod animate;
 mod button;
 mod checkbox;
 mod harness;

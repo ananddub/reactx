@@ -57,13 +57,13 @@ fn WeatherView(latitude: f64, longitude: f64) -> Element {
             );
             let wind = format!("Wind {:.1} km/h", current.windspeed);
             jsx! {
-                <Text color="#89b4fa" bold>{headline}</Text>
-                <Text dim>{wind}</Text>
+                <span class="text-blue-300 bold">{headline}</span>
+                <span class="dim">{wind}</span>
             }
         }
         Err(error) => {
             let message = format!("Weather unavailable: {error}");
-            jsx! { <Text color="#f38ba8">{message}</Text> }
+            jsx! { <span class="text-rose-400">{message}</span> }
         }
     };
     content
@@ -81,9 +81,9 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#89b4fa" padding="1" gap={Some(1)}>
-                <Text bold>Weather</Text>
-                <div style="direction:row;gap:1">
+            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+                <span class="bold">Weather</span>
+                <div class="flex flex-row gap-1">
                     {cities.iter().enumerate().map(|(index, city)| jsx! {
                         <Button
                             key="{city.0}"
@@ -95,7 +95,7 @@ fn App() -> Element {
                 <Suspense>
                     <WeatherView key="{name}" latitude={latitude} longitude={longitude} />
                 </Suspense>
-                <Text dim>{"Data from open-meteo.com. Ctrl+C to quit."}</Text>
+                <span class="dim">{"Data from open-meteo.com. Ctrl+C to quit."}</span>
             </Container>
         </ThemeProvider>
     }

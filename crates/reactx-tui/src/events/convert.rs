@@ -11,6 +11,7 @@ use dioxus_html::{
 
 use super::data::{TuiFocusEvent, TuiFormEvent, TuiKeyboardEvent, TuiMouseEvent, TuiWheelEvent};
 pub(super) use super::keymap::{map_key, map_modifiers};
+use super::text::TuiClipboardEvent;
 
 pub(super) fn install_event_converter() {
     static INSTALL: Once = Once::new();
@@ -25,8 +26,13 @@ impl HtmlEventConverter for TuiEventConverter {
         unsupported()
     }
 
-    fn convert_clipboard_data(&self, _event: &PlatformEventData) -> ClipboardData {
-        unsupported()
+    fn convert_clipboard_data(&self, event: &PlatformEventData) -> ClipboardData {
+        ClipboardData::new(
+            event
+                .downcast::<TuiClipboardEvent>()
+                .expect("clipboard event data")
+                .clone(),
+        )
     }
 
     fn convert_composition_data(&self, _event: &PlatformEventData) -> CompositionData {

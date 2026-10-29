@@ -56,6 +56,7 @@ impl Harness {
         let event = TuiEvent::MouseClick {
             x: rect.x + rect.width / 2,
             y: rect.y + rect.height / 2,
+            modifiers: KeyModifiers::NONE,
         };
         assert_eq!(
             handle_event(&self.dom, &mut self.renderer, event),

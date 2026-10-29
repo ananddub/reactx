@@ -4,6 +4,7 @@
 //! terminal renderer turns those declarations into Ratatui cells, so a widget
 //! tree stays a normal Dioxus element tree.
 
+mod animate;
 mod container;
 mod controls;
 mod input;
@@ -12,6 +13,7 @@ mod modal;
 mod tabs;
 mod text;
 
+pub use animate::Animate;
 pub use container::Container;
 pub use controls::{Button, Checkbox};
 pub use input::{Input, TextArea};

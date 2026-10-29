@@ -1,8 +1,8 @@
-//! Attribute application and removal for [`StyleProps`].
+//! Attribute setters for [`StyleProps`].
 
-use super::parse::{normalize, parse_bool, parse_cells, parse_cells_opt, parse_scroll};
-use super::*;
 use crate::color::TuiColor;
+use crate::style::parse::{normalize, parse_bool, parse_cells, parse_cells_opt, parse_scroll};
+use crate::style::*;
 
 impl StyleProps {
     pub fn apply_attr(&mut self, name: &str, value: &str) {
@@ -28,6 +28,18 @@ impl StyleProps {
             "align_self" => {
                 if let Some(v) = Align::parse(value) {
                     self.align_self = Some(v);
+                }
+            }
+            "align_content" | "content" => {
+                if let Some(v) = Justify::parse(value) {
+                    self.align_content = Some(v);
+                }
+            }
+            "flex_wrap" | "wrap" => self.flex_wrap = FlexWrap::parse(value),
+            "flex_basis" | "basis" => self.flex_basis = Dim::parse(value),
+            "order" => {
+                if let Ok(v) = value.parse::<i32>() {
+                    self.order = Some(v);
                 }
             }
             "flex_grow" | "grow" => {
@@ -123,67 +135,15 @@ impl StyleProps {
         }
     }
 
-    /// Remove an attribute previously set through [`Self::apply_attr`].
-    pub fn clear_attr(&mut self, name: &str) {
-        let name = normalize(name);
-        match name.as_str() {
-            "direction" | "flex_direction" => self.direction = None,
-            "justify" | "justify_content" => self.justify = None,
-            "align" | "align_items" => self.align = None,
-            "align_self" => self.align_self = None,
-            "flex_grow" | "grow" => self.flex_grow = None,
-            "flex_shrink" | "shrink" => self.flex_shrink = None,
-            "width" => self.width = None,
-            "height" => self.height = None,
-            "min_width" => self.min_width = None,
-            "min_height" => self.min_height = None,
-            "max_width" => self.max_width = None,
-            "max_height" => self.max_height = None,
-            "padding" => self.padding = Edges::default(),
-            "padding_top" => self.padding.top = 0.0,
-            "padding_right" => self.padding.right = 0.0,
-            "padding_bottom" => self.padding.bottom = 0.0,
-            "padding_left" => self.padding.left = 0.0,
-            "margin" => self.margin = Edges::default(),
-            "margin_top" => self.margin.top = 0.0,
-            "margin_right" => self.margin.right = 0.0,
-            "margin_bottom" => self.margin.bottom = 0.0,
-            "margin_left" => self.margin.left = 0.0,
-            "gap" | "gap_row" | "row_gap" | "gap_col" | "column_gap" | "col_gap" => self.gap = None,
-            "position" => self.position = None,
-            "top" => self.top = None,
-            "right" => self.right = None,
-            "bottom" => self.bottom = None,
-            "left" => self.left = None,
-            "display" => self.display = None,
-            "overflow" => self.overflow = None,
-            "scroll_x" => self.scroll_x = 0.0,
-            "scroll_y" => self.scroll_y = 0.0,
-            "layer" | "z_index" | "z" => self.layer = None,
-            "focus_trap" | "trap_focus" => self.focus_trap = false,
-            "autofocus" | "auto_focus" => self.autofocus = false,
-            "color" | "fg" | "foreground" => self.color = None,
-            "bg" | "background" | "background_color" => self.bg = None,
-            "border" => self.border = None,
-            "border_color" => self.border_color = None,
-            "title" => self.title = None,
-            "title_align" => self.title_align = None,
-            "text_align" | "align_text" => self.text_align = None,
-            "bold" => self.bold = false,
-            "italic" => self.italic = false,
-            "underline" | "underlined" => self.underline = false,
-            "dim" | "dimmed" => self.dim = false,
-            "strikethrough" | "crossed_out" => self.strikethrough = false,
-            "reversed" | "reverse" => self.reversed = false,
-            "focusable" => self.focusable = None,
-            "disabled" => self.disabled = false,
-            "value" | "input_value" => self.value = None,
-            "placeholder" => self.placeholder = None,
-            "label" => self.label = None,
-            "checked" => self.checked = None,
-            "variant" => self.variant = None,
-            _ => {
-                self.custom.remove(&name);
+    /// Apply a `style="key:value;..."` declaration list. Later declarations
+    /// win, matching CSS.
+    pub fn apply_style_string(&mut self, text: &str) {
+        for declaration in text.split(';') {
+            if let Some((key, value)) = declaration.split_once(':') {
+                let key = key.trim();
+                if !key.is_empty() {
+                    self.apply_attr(key, value.trim());
+                }
             }
         }
     }

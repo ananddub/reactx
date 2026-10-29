@@ -69,10 +69,11 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#89b4fa" padding="1" gap={Some(1)}>
-                <Text bold>Todos</Text>
-                <div style="direction:row;gap:1">
+            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+                <span class="bold">Todos</span>
+                <div class="flex flex-row gap-1">
                     <Input
+                        class="grow"
                         value={draft()}
                         placeholder="What needs doing?"
                         on_input=move |value| draft.set(value)
@@ -80,7 +81,7 @@ fn App() -> Element {
                     />
                     <Button on_click=move |_| add()>Add</Button>
                 </div>
-                <div style="direction:row;gap:1">
+                <div class="flex flex-row gap-1">
                     {[Filter::All, Filter::Active, Filter::Done].into_iter().map(|option| jsx! {
                         <Button
                             key="{option.label()}"
@@ -91,11 +92,11 @@ fn App() -> Element {
                 </div>
                 <List title={Some(title)}>
                     {visible.is_empty().then(|| jsx! {
-                        <ListItem><Text dim>Nothing here yet.</Text></ListItem>
+                        <ListItem><span class="dim">Nothing here yet.</span></ListItem>
                     })}
                     {visible.into_iter().map(|todo| jsx! {
                         <ListItem key="{todo.id}">
-                            <div style="direction:row;gap:1">
+                            <div class="flex flex-row gap-1">
                                 <Checkbox
                                     checked={todo.done}
                                     on_change=move |done| {
@@ -105,9 +106,9 @@ fn App() -> Element {
                                     }
                                 />
                                 {if todo.done {
-                                    jsx! { <Text dim strikethrough>{todo.text}</Text> }
+                                    jsx! { <span class="dim line-through">{todo.text}</span> }
                                 } else {
-                                    jsx! { <Text>{todo.text}</Text> }
+                                    jsx! { <span>{todo.text}</span> }
                                 }}
                                 <Button
                                     variant="danger"
@@ -117,7 +118,7 @@ fn App() -> Element {
                         </ListItem>
                     })}
                 </List>
-                <Text dim>Enter submits. Tab moves focus. Ctrl+C quits.</Text>
+                <span class="dim">Enter submits. Tab moves focus. Ctrl+C quits.</span>
             </Container>
         </ThemeProvider>
     }

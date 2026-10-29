@@ -91,7 +91,7 @@ impl RouterContext {
     }
 }
 
-/// Access the nearest router; panics outside a [`Router`].
+/// Access the nearest router; panics outside a [`Router`](crate::Router).
 pub fn use_router() -> RouterContext {
     use_context::<RouterContext>()
 }

@@ -73,7 +73,11 @@ impl Harness {
     }
 
     pub(crate) fn click(&mut self, x: u16, y: u16) {
-        self.event(TuiEvent::MouseClick { x, y });
+        self.event(TuiEvent::MouseClick {
+            x,
+            y,
+            modifiers: KeyModifiers::NONE,
+        });
     }
 
     pub(crate) fn wheel(&mut self, x: u16, y: u16, delta_x: i32, delta_y: i32) {
@@ -82,6 +86,7 @@ impl Harness {
             y,
             delta_x,
             delta_y,
+            modifiers: KeyModifiers::NONE,
         });
     }
 
@@ -119,19 +124,55 @@ impl Harness {
         }
     }
 
+    pub(crate) fn key_up(&mut self, key: TuiKey) {
+        self.event(TuiEvent::KeyUp(TuiKeyEvent {
+            key,
+            modifiers: KeyModifiers::NONE,
+        }));
+    }
+
     pub(crate) fn mouse_down(&mut self, x: u16, y: u16, button: MouseButtonKind) {
-        self.event(TuiEvent::MouseDown { x, y, button });
+        self.mouse_down_mod(x, y, button, KeyModifiers::NONE);
+    }
+
+    pub(crate) fn mouse_down_mod(
+        &mut self,
+        x: u16,
+        y: u16,
+        button: MouseButtonKind,
+        modifiers: KeyModifiers,
+    ) {
+        self.event(TuiEvent::MouseDown {
+            x,
+            y,
+            button,
+            modifiers,
+        });
     }
 
     pub(crate) fn mouse_up(&mut self, x: u16, y: u16, button: MouseButtonKind) {
-        self.event(TuiEvent::MouseUp { x, y, button });
+        self.event(TuiEvent::MouseUp {
+            x,
+            y,
+            button,
+            modifiers: KeyModifiers::NONE,
+        });
     }
 
     pub(crate) fn mouse_move(&mut self, x: u16, y: u16) {
-        self.event(TuiEvent::MouseMove { x, y });
+        self.event(TuiEvent::MouseMove {
+            x,
+            y,
+            modifiers: KeyModifiers::NONE,
+        });
     }
 
     pub(crate) fn mouse_drag(&mut self, x: u16, y: u16, button: MouseButtonKind) {
-        self.event(TuiEvent::MouseDrag { x, y, button });
+        self.event(TuiEvent::MouseDrag {
+            x,
+            y,
+            button,
+            modifiers: KeyModifiers::NONE,
+        });
     }
 }

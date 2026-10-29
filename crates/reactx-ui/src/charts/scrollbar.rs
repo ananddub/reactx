@@ -13,6 +13,9 @@ pub fn Scrollbar(
     #[props(default)] orientation: Option<String>,
     #[props(default)] thumb_color: String,
     #[props(default)] track_color: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let thumb = if thumb_color.is_empty() {
@@ -41,6 +44,6 @@ pub fn Scrollbar(
     style_push(&mut style, "scrollbar-track", &track);
 
     rsx! {
-        div { style: style }
+        div { class: class, style: style }
     }
 }

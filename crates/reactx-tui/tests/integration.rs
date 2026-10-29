@@ -65,6 +65,7 @@ fn renders_counter_and_reacts_to_click() {
     let click = TuiEvent::MouseClick {
         x: rect.x + 1,
         y: rect.y,
+        modifiers: KeyModifiers::NONE,
     };
     assert_eq!(handle_event(&dom, &mut renderer, click), Flow::Continue);
     dom.render_immediate(&mut renderer);

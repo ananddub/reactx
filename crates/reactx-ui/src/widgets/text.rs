@@ -15,6 +15,9 @@ pub fn Text(
     #[props(default)] underline: bool,
     #[props(default)] strikethrough: bool,
     #[props(default)] dim: bool,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
     children: Element,
 ) -> Element {
     let theme = use_theme();
@@ -34,6 +37,6 @@ pub fn Text(
     style_flag(&mut style, "dim", dim);
 
     rsx! {
-        span { style: style, {children} }
+        span { class: class, style: style, {children} }
     }
 }

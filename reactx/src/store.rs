@@ -7,8 +7,13 @@
 //!
 //! fn Counter() -> Element {
 //!     let count = COUNT.with(|count| *count);
-//!     rsx! {
-//!         button { onclick: move |_| COUNT.with_mut(|count| *count += 1), "+1 ({count})" }
+//!     jsx! {
+//!         <button
+//!             class="px-2 border rounded"
+//!             onclick=move |_| COUNT.with_mut(|count| *count += 1)
+//!         >
+//!             +1 ({count})
+//!         </button>
 //!     }
 //! }
 //! ```

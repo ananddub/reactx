@@ -1,20 +1,23 @@
 //! Terminal lifecycle, the async event loop, and `launch`.
 
 use std::io;
+use std::time::Duration;
 
 use crossterm::cursor::Show;
 use crossterm::event::{
-    DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-    EventStream,
+    DisableBracketedPaste, DisableFocusChange, DisableMouseCapture, EnableBracketedPaste,
+    EnableFocusChange, EnableMouseCapture, Event as CrosstermEvent, EventStream,
 };
 use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use dioxus_core::{Element, VirtualDom};
-use futures_util::StreamExt;
+use futures_util::future::poll_immediate;
+use futures_util::{Stream, StreamExt};
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
+use reactx_core::TuiEvent;
 use tokio::task::LocalSet;
 
 mod translate;
@@ -64,6 +67,7 @@ pub fn restore_terminal() {
         io::stdout(),
         DisableMouseCapture,
         DisableBracketedPaste,
+        DisableFocusChange,
         LeaveAlternateScreen,
         Show
     );
@@ -79,6 +83,7 @@ impl TerminalGuard {
             EnterAlternateScreen,
             EnableMouseCapture,
             EnableBracketedPaste,
+            EnableFocusChange,
             Show
         )?;
         Ok(Self)
@@ -115,18 +120,73 @@ async fn run(app: fn() -> Element) -> io::Result<()> {
                 let Some(Ok(event)) = maybe_event else {
                     break;
                 };
-                if let Some(event) = translate::translate(event) {
-                    if events::handle_event(&dom, &mut renderer, event) == Flow::Quit {
-                        break;
-                    }
-                    dom.render_immediate(&mut renderer);
+                if !handle_batch(event, &mut stream, &dom, &mut renderer).await {
+                    break;
                 }
+                dom.render_immediate(&mut renderer);
             }
             _ = dom.wait_for_work() => {
                 dom.render_immediate(&mut renderer);
             }
+            // Keep frames coming while an effect is running; screen effects
+            // advance in `paint`, not in the VirtualDom's task queue.
+            _ = tokio::time::sleep(EFFECT_FRAME), if renderer.effects_active() => {}
         }
     }
 
     Ok(())
 }
+
+/// Upper bound on events drained before the next render, so a continuous
+/// flood still yields frames.
+const MAX_BATCH: usize = 256;
+
+/// Frame interval used while a screen effect is running (~60 fps).
+const EFFECT_FRAME: Duration = Duration::from_millis(16);
+
+/// Handle the first event plus everything already queued before rendering.
+///
+/// Rapid input (mouse motion in particular) can queue hundreds of events;
+/// handling the whole backlog before rendering keeps click latency stable,
+/// and superseded pointer samples are dropped. Returns false on quit.
+///
+/// The drain polls [`poll_immediate`], never `now_or_never`: crossterm's
+/// `EventStream` keeps a single waker slot, so polling it with a noop waker
+/// would swallow the registration and leave the loop permanently asleep.
+async fn handle_batch<S>(
+    first: CrosstermEvent,
+    stream: &mut S,
+    dom: &VirtualDom,
+    renderer: &mut TuiRenderer,
+) -> bool
+where
+    S: Stream<Item = io::Result<CrosstermEvent>> + Unpin,
+{
+    let mut pending: Vec<TuiEvent> = Vec::new();
+    if let Some(event) = translate::translate(first) {
+        pending.push(event);
+    }
+    while pending.len() < MAX_BATCH {
+        let Some(Some(Ok(raw))) = poll_immediate(stream.next()).await else {
+            break;
+        };
+        if let Some(event) = translate::translate(raw) {
+            pending.push(event);
+        }
+    }
+    while !pending.is_empty() {
+        let event = pending.remove(0);
+        if matches!(event, TuiEvent::MouseMove { .. })
+            && matches!(pending.first(), Some(TuiEvent::MouseMove { .. }))
+        {
+            continue;
+        }
+        if events::handle_event(dom, renderer, event) == Flow::Quit {
+            return false;
+        }
+    }
+    true
+}
+
+#[cfg(test)]
+mod tests;

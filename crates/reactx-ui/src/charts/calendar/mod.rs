@@ -19,6 +19,9 @@ pub fn Calendar(
     #[props(default)] selected_day: Option<u32>,
     #[props(default)] on_select: Option<EventHandler<u32>>,
     #[props(default)] on_month_change: Option<EventHandler<(i32, u32)>>,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let (previous_year, previous_month) = shift_month(year, month, -1);
@@ -105,6 +108,7 @@ pub fn Calendar(
 
     rsx! {
         div {
+            class: class,
             style: format!(
                 "direction:column;border:single;border-color:{};padding:0 1;width:23",
                 css(theme.border)

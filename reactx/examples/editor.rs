@@ -51,19 +51,12 @@ fn App() -> Element {
         .split(',')
         .filter(|tag| !tag.trim().is_empty())
         .count();
-    let drafts_style = format!(
-        "direction:column;flex-grow:1;height:100%;overflow:hidden;\
-         border:single;padding:0 1;scroll-y:{offset}"
-    );
+    let drafts_style = format!("scroll-y:{offset}");
 
     jsx! {
         <ThemeProvider>
             <Container
-                border="rounded"
-                border-color="#a6e3a1"
-                padding="1"
-                gap={Some(1)}
-                height="100%"
+                class="flex flex-col border border-green-300 rounded p-1 gap-1 h-full"
                 title="Text editing"
             >
                 <Input
@@ -86,14 +79,15 @@ fn App() -> Element {
                     placeholder="rust, tui, dioxus"
                     on_input=move |next| tags.set(next)
                 />
-                <div style="direction:row;gap:2">
-                    <Text dim>slug: {slug}</Text>
-                    <Text dim>{chars} chars</Text>
-                    <Text dim>{tag_count} tags</Text>
-                    <Text dim>{draft_list.len()} drafts</Text>
+                <div class="flex flex-row gap-2">
+                    <span class="dim">slug: {slug}</span>
+                    <span class="dim">{chars} chars</span>
+                    <span class="dim">{tag_count} tags</span>
+                    <span class="dim">{draft_list.len()} drafts</span>
                 </div>
-                <div style="direction:row;height:{DRAFTS_HEIGHT}">
+                <div class={format!("flex flex-row h-[{DRAFTS_HEIGHT}]")}>
                     <div
+                        class="flex flex-col grow h-full overflow-hidden border px-1"
                         style={drafts_style}
                         onwheel=move |event| {
                             let delta = event.delta().strip_units().y as i32 * 2;
@@ -102,7 +96,7 @@ fn App() -> Element {
                         }
                     >
                         {if draft_list.is_empty() {
-                            jsx! { <Text dim>"Type a title and press Enter."</Text> }
+                            jsx! { <span class="dim">"Type a title and press Enter."</span> }
                         } else {
                             jsx! {
                                 <>
@@ -112,7 +106,8 @@ fn App() -> Element {
                                         jsx! {
                                             <div
                                                 key="{index}"
-                                                style="direction:row;gap:1;focusable:false"
+                                                class="flex flex-row gap-1"
+                                                style="focusable:false"
                                                 onclick=move |_| {
                                                     if let Some(position) = drafts()
                                                         .iter()
@@ -125,8 +120,8 @@ fn App() -> Element {
                                                     offset.set(offset().min(max));
                                                 }
                                             >
-                                                <span style="color:#6c7086">{"↺"}</span>
-                                                <Text color="#a6e3a1">{label}</Text>
+                                                <span class="text-slate-500">{"↺"}</span>
+                                                <span class="text-green-300">{label}</span>
                                             </div>
                                         }
                                     })}
@@ -138,9 +133,9 @@ fn App() -> Element {
                         <Scrollbar position={offset() as usize} content_length={draft_list.len()} />
                     })}
                 </div>
-                <Text dim>
+                <span class="dim">
                     {"Enter saves · click a draft to reopen it · wheel scrolls the list · Ctrl+C quits"}
-                </Text>
+                </span>
             </Container>
         </ThemeProvider>
     }

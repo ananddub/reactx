@@ -7,7 +7,13 @@ use crate::widgets::{style_flag, style_push};
 
 /// A vertical list of [`ListItem`]s.
 #[component]
-pub fn List(#[props(default)] title: Option<String>, children: Element) -> Element {
+pub fn List(
+    #[props(default)] title: Option<String>,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
+    children: Element,
+) -> Element {
     let theme = use_theme();
     let mut style = String::new();
     style_push(&mut style, "direction", "column");
@@ -19,7 +25,7 @@ pub fn List(#[props(default)] title: Option<String>, children: Element) -> Eleme
     }
 
     rsx! {
-        div { style: style, {children} }
+        div { class: class, style: style, {children} }
     }
 }
 
@@ -28,6 +34,9 @@ pub fn List(#[props(default)] title: Option<String>, children: Element) -> Eleme
 pub fn ListItem(
     #[props(default)] selected: bool,
     #[props(default)] on_click: Option<EventHandler<()>>,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
     children: Element,
 ) -> Element {
     let theme = use_theme();
@@ -45,6 +54,7 @@ pub fn ListItem(
         style_flag(&mut style, "focusable", true);
         rsx! {
             span {
+                class: class,
                 style: style,
                 onclick: move |_| on_click.call(()),
                 {children}
@@ -52,7 +62,7 @@ pub fn ListItem(
         }
     } else {
         rsx! {
-            span { style: style, {children} }
+            span { class: class, style: style, {children} }
         }
     }
 }

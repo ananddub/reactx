@@ -13,6 +13,9 @@ pub fn Modal(
     open: bool,
     #[props(default)] title: String,
     #[props(default)] on_close: Option<EventHandler<()>>,
+    /// Tailwind-style utility classes, applied to the card beneath its style.
+    #[props(default)]
+    class: String,
     children: Element,
 ) -> Element {
     if !open {
@@ -63,6 +66,7 @@ pub fn Modal(
                 }
             },
             div {
+                class: class,
                 style: card,
                 onclick: move |event: Event<MouseData>| event.stop_propagation(),
                 {children}

@@ -56,30 +56,36 @@ pub enum MouseButtonKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TuiEvent {
     Key(TuiKeyEvent),
+    KeyUp(TuiKeyEvent),
     MouseClick {
         x: u16,
         y: u16,
+        modifiers: KeyModifiers,
     },
     MouseDown {
         x: u16,
         y: u16,
         button: MouseButtonKind,
+        modifiers: KeyModifiers,
     },
     MouseUp {
         x: u16,
         y: u16,
         button: MouseButtonKind,
+        modifiers: KeyModifiers,
     },
     /// Pointer movement with no button held.
     MouseMove {
         x: u16,
         y: u16,
+        modifiers: KeyModifiers,
     },
     /// Pointer movement while a button is held.
     MouseDrag {
         x: u16,
         y: u16,
         button: MouseButtonKind,
+        modifiers: KeyModifiers,
     },
     /// Mouse wheel movement in cells at the given terminal position.
     Scroll {
@@ -87,6 +93,7 @@ pub enum TuiEvent {
         y: u16,
         delta_x: i32,
         delta_y: i32,
+        modifiers: KeyModifiers,
     },
     Resize {
         width: u16,

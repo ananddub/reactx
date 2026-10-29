@@ -1,6 +1,7 @@
 //! The headless renderer state and its queries.
 
 use std::io;
+use std::time::Instant;
 
 use dioxus_core::ElementId;
 use ratatui::backend::Backend;
@@ -9,10 +10,12 @@ use ratatui::Terminal;
 use reactx_core::{NodeId, NodeTree};
 use rustc_hash::FxHashMap;
 
+use crate::effects::Effects;
 use crate::focus::FocusManager;
 use crate::{layout, paint};
 
 mod attrs;
+mod classes;
 mod mutations;
 mod query;
 mod tree_ops;
@@ -40,6 +43,8 @@ pub struct TuiRenderer {
     pub input_anchors: FxHashMap<NodeId, usize>,
     /// The node currently under the pointer, used for `mouseover`/`mouseout`.
     pub hover: Option<NodeId>,
+    /// Time and cell of the previous left click, for double-click detection.
+    pub last_click: Option<(Instant, u16, u16)>,
     /// Value of the focused text input when it gained focus, used to raise
     /// `change` when it loses focus after an edit.
     pub focus_baseline: Option<(NodeId, String)>,
@@ -47,6 +52,8 @@ pub struct TuiRenderer {
     pub clipboard: Option<String>,
     /// Accent used for focused borders and text.
     pub focus_color: reactx_core::TuiColor,
+    /// Screen effects applied after each frame is painted.
+    pub effects: Effects,
     stack: Vec<NodeId>,
 }
 
@@ -70,9 +77,11 @@ impl TuiRenderer {
             input_cursors: FxHashMap::default(),
             input_anchors: FxHashMap::default(),
             hover: None,
+            last_click: None,
             focus_baseline: None,
             clipboard: None,
             focus_color: reactx_core::TuiColor::Rgb(137, 180, 250),
+            effects: Effects::default(),
             stack: Vec::new(),
         }
     }
@@ -92,7 +101,9 @@ impl TuiRenderer {
         let focus = &self.focus;
         let cursor = self.cursor;
         let focus_color = self.focus_color;
+        let effects = &mut self.effects;
         terminal.draw(|frame| {
+            effects.begin_frame(frame);
             paint::render(
                 frame,
                 tree,
@@ -104,9 +115,15 @@ impl TuiRenderer {
                 focus,
                 focus_color,
                 cursor,
-            )
+            );
+            effects.end_frame(frame);
         })?;
         Ok(())
+    }
+
+    /// Whether screen effects still need another frame.
+    pub fn effects_active(&self) -> bool {
+        self.effects.is_active()
     }
 
     /// Layout and paint without a terminal (useful for hit testing/tests).
@@ -116,7 +133,12 @@ impl TuiRenderer {
     }
 
     fn recompute(&mut self) {
+        let focused_before = self.focus.focused_id();
+        self.rebuild_styles();
         self.focus.rebuild(&self.tree);
+        if self.focus.focused_id() != focused_before {
+            self.rebuild_styles();
+        }
         let result = layout::compute_full(&self.tree, self.area);
         self.layout = result.rects;
         self.clips = result.clips;
@@ -138,6 +160,13 @@ impl TuiRenderer {
             self.focus_baseline = None;
         }
         self.update_hit_rects();
+        self.effects.sync_nodes(
+            &self.tree,
+            &self.layout,
+            &self.clips,
+            &self.offsets,
+            self.area,
+        );
         self.cursor = paint::cursor_position(
             &self.tree,
             &self.layout,

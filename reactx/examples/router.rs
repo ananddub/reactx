@@ -10,11 +10,11 @@ use reactx::prelude::*;
 fn Home() -> Element {
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#89b4fa" padding="1" gap={Some(1)}>
-                <Text bold>Home</Text>
-                <Link to="/todo/1">Open todo #1</Link>
-                <Link to="/todo/2">Open todo #2</Link>
-                <Text dim>Click a link or use the two todo routes.</Text>
+            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+                <span class="bold">Home</span>
+                <Link to="/todo/1" class="bold">Open todo #1</Link>
+                <Link to="/todo/2" class="bold">Open todo #2</Link>
+                <span class="dim">Click a link or use the two todo routes.</span>
             </Container>
         </ThemeProvider>
     }
@@ -24,9 +24,9 @@ fn TodoPage() -> Element {
     let id = use_param("id").unwrap_or_default();
     jsx! {
         <ThemeProvider>
-            <Container border="rounded" border-color="#a6e3a1" padding="1" gap={Some(1)}>
-                <Text color="#a6e3a1" bold>Todo #{id}</Text>
-                <Text>{"This page was matched by /todo/:id."}</Text>
+            <Container class="flex flex-col border border-green-300 rounded p-1 gap-1">
+                <span class="text-green-300 bold">Todo #{id}</span>
+                <span>{"This page was matched by /todo/:id."}</span>
                 <Button on_click=move |_| navigate("/")>Back home</Button>
             </Container>
         </ThemeProvider>

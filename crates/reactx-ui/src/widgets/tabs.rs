@@ -11,6 +11,9 @@ pub fn Tabs(
     tabs: Vec<String>,
     on_select: EventHandler<usize>,
     #[props(default)] selected: usize,
+    /// Tailwind-style utility classes, applied to the tab row.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let mut row_style = String::new();
@@ -47,6 +50,6 @@ pub fn Tabs(
         .collect();
 
     rsx! {
-        div { style: row_style, {items.into_iter()} }
+        div { class: class, style: row_style, {items.into_iter()} }
     }
 }

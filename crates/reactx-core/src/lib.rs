@@ -10,6 +10,6 @@ pub use color::{NamedColor, TuiColor};
 pub use events::{FocusEvent, KeyModifiers, MouseButtonKind, TuiEvent, TuiKey, TuiKeyEvent};
 pub use node::{NodeId, NodeTree, TuiNode};
 pub use style::{
-    Align, BorderKind, Dim, Display, Edges, FlexDir, Justify, Overflow, Position, StyleProps,
-    TextAlign, TitleAlign,
+    Align, BorderKind, ClassState, Dim, Display, Edges, FlexDir, FlexWrap, Justify, Overflow,
+    Position, StyleProps, TextAlign, TitleAlign,
 };

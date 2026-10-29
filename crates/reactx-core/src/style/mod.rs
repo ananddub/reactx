@@ -7,13 +7,15 @@ mod apply;
 mod kinds_layout;
 mod kinds_visual;
 mod parse;
+mod tailwind;
 
 #[cfg(test)]
 mod tests;
 
-pub use kinds_layout::{Align, Display, FlexDir, Justify, Overflow, Position};
+pub use kinds_layout::{Align, Display, FlexDir, FlexWrap, Justify, Overflow, Position};
 pub use kinds_visual::{BorderKind, Dim, Edges, TextAlign, TitleAlign};
 pub use parse::{parse_bool, parse_cells};
+pub use tailwind::ClassState;
 
 use crate::color::TuiColor;
 
@@ -25,8 +27,14 @@ pub struct StyleProps {
     pub justify: Option<Justify>,
     pub align: Option<Align>,
     pub align_self: Option<Align>,
+    /// Alignment of wrapped lines.
+    pub align_content: Option<Justify>,
     pub flex_grow: Option<f32>,
     pub flex_shrink: Option<f32>,
+    pub flex_wrap: Option<FlexWrap>,
+    pub flex_basis: Option<Dim>,
+    /// Paint/layout order among siblings (Tailwind `order-*`).
+    pub order: Option<i32>,
     pub width: Option<Dim>,
     pub height: Option<Dim>,
     pub min_width: Option<Dim>,

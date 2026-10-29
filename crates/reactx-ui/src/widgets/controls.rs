@@ -12,6 +12,9 @@ pub fn Button(
     on_click: EventHandler<MouseEvent>,
     #[props(default)] variant: String,
     #[props(default)] disabled: bool,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
     children: Element,
 ) -> Element {
     let theme = use_theme();
@@ -42,6 +45,7 @@ pub fn Button(
 
     rsx! {
         button {
+            class: class,
             style: style,
             onclick: move |event| {
                 if !disabled {
@@ -59,6 +63,9 @@ pub fn Checkbox(
     on_change: EventHandler<bool>,
     #[props(default)] checked: bool,
     #[props(default)] label: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
 ) -> Element {
     let theme = use_theme();
     let mut style = String::new();
@@ -69,6 +76,7 @@ pub fn Checkbox(
 
     rsx! {
         span {
+            class: class,
             style: style,
             onclick: move |_| on_change.call(!checked),
             "{label}"

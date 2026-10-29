@@ -4,7 +4,7 @@ use dioxus_core::ElementId;
 use rustc_hash::FxHashMap;
 use std::collections::HashSet;
 
-use crate::style::{Display, StyleProps};
+use crate::style::{ClassState, Display, StyleProps};
 
 mod mutations;
 mod traversal;
@@ -29,14 +29,19 @@ pub struct TuiNode {
     /// Normalized tag name (`box`, `text`, `button`, `input`, `#text`, ...).
     pub tag: String,
     pub text: Option<String>,
+    /// Effective style props after base attributes, classes and inline style.
     pub attrs: StyleProps,
+    /// Attributes that do not come from `class`/`style`; kept so [`Self::attrs`]
+    /// can be rebuilt when variant state or the terminal size changes.
+    pub base_attrs: StyleProps,
+    /// Raw `class="..."` list, if any.
+    pub class: Option<String>,
+    /// Raw `style="..."` declarations, if any.
+    pub style: Option<String>,
     pub children: Vec<NodeId>,
     pub parent: Option<NodeId>,
     /// Event listener names, without the `on` prefix.
     pub events: HashSet<String>,
-    /// Attribute names contributed by the current `style="..."` string, so a
-    /// later style update can clear declarations that disappeared.
-    pub style_keys: Vec<String>,
 }
 
 impl TuiNode {
@@ -65,6 +70,19 @@ impl TuiNode {
 
     pub fn is_hidden(&self) -> bool {
         matches!(self.attrs.display, Some(Display::None))
+    }
+
+    /// Recompute [`Self::attrs`] in CSS precedence order: base attributes,
+    /// then classes (plain utilities before matching variants), then inline
+    /// `style`.
+    pub fn rebuild_styles(&mut self, state: &ClassState) {
+        self.attrs = self.base_attrs.clone();
+        if let Some(classes) = self.class.as_deref() {
+            self.attrs.apply_classes(classes, state);
+        }
+        if let Some(style) = self.style.as_deref() {
+            self.attrs.apply_style_string(style);
+        }
     }
 
     /// Whether the node participates in keyboard focus navigation.

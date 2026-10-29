@@ -9,57 +9,70 @@ use reactx_core::{KeyModifiers as TuiModifiers, MouseButtonKind, TuiEvent, TuiKe
 pub(super) fn translate(event: CrosstermEvent) -> Option<TuiEvent> {
     match event {
         CrosstermEvent::Key(key) => {
-            if matches!(key.kind, KeyEventKind::Release) {
-                None
+            let released = matches!(key.kind, KeyEventKind::Release);
+            let key = translate_key(key);
+            Some(if released {
+                TuiEvent::KeyUp(key)
             } else {
-                Some(TuiEvent::Key(translate_key(key)))
+                TuiEvent::Key(key)
+            })
+        }
+        CrosstermEvent::Mouse(mouse) => {
+            let modifiers = translate_modifiers(mouse.modifiers);
+            match mouse.kind {
+                MouseEventKind::Down(button) => Some(TuiEvent::MouseDown {
+                    x: mouse.column,
+                    y: mouse.row,
+                    button: translate_button(button),
+                    modifiers,
+                }),
+                MouseEventKind::Up(button) => Some(TuiEvent::MouseUp {
+                    x: mouse.column,
+                    y: mouse.row,
+                    button: translate_button(button),
+                    modifiers,
+                }),
+                MouseEventKind::Moved => Some(TuiEvent::MouseMove {
+                    x: mouse.column,
+                    y: mouse.row,
+                    modifiers,
+                }),
+                MouseEventKind::Drag(button) => Some(TuiEvent::MouseDrag {
+                    x: mouse.column,
+                    y: mouse.row,
+                    button: translate_button(button),
+                    modifiers,
+                }),
+                MouseEventKind::ScrollUp => Some(TuiEvent::Scroll {
+                    x: mouse.column,
+                    y: mouse.row,
+                    delta_x: 0,
+                    delta_y: -1,
+                    modifiers,
+                }),
+                MouseEventKind::ScrollDown => Some(TuiEvent::Scroll {
+                    x: mouse.column,
+                    y: mouse.row,
+                    delta_x: 0,
+                    delta_y: 1,
+                    modifiers,
+                }),
+                MouseEventKind::ScrollLeft => Some(TuiEvent::Scroll {
+                    x: mouse.column,
+                    y: mouse.row,
+                    delta_x: -1,
+                    delta_y: 0,
+                    modifiers,
+                }),
+                MouseEventKind::ScrollRight => Some(TuiEvent::Scroll {
+                    x: mouse.column,
+                    y: mouse.row,
+                    delta_x: 1,
+                    delta_y: 0,
+                    modifiers,
+                }),
             }
         }
-        CrosstermEvent::Mouse(mouse) => match mouse.kind {
-            MouseEventKind::Down(button) => Some(TuiEvent::MouseDown {
-                x: mouse.column,
-                y: mouse.row,
-                button: translate_button(button),
-            }),
-            MouseEventKind::Up(button) => Some(TuiEvent::MouseUp {
-                x: mouse.column,
-                y: mouse.row,
-                button: translate_button(button),
-            }),
-            MouseEventKind::Moved => Some(TuiEvent::MouseMove {
-                x: mouse.column,
-                y: mouse.row,
-            }),
-            MouseEventKind::Drag(button) => Some(TuiEvent::MouseDrag {
-                x: mouse.column,
-                y: mouse.row,
-                button: translate_button(button),
-            }),
-            MouseEventKind::ScrollUp => Some(TuiEvent::Scroll {
-                x: mouse.column,
-                y: mouse.row,
-                delta_x: 0,
-                delta_y: -1,
-            }),
-            MouseEventKind::ScrollDown => Some(TuiEvent::Scroll {
-                x: mouse.column,
-                y: mouse.row,
-                delta_x: 0,
-                delta_y: 1,
-            }),
-            MouseEventKind::ScrollLeft => Some(TuiEvent::Scroll {
-                x: mouse.column,
-                y: mouse.row,
-                delta_x: -1,
-                delta_y: 0,
-            }),
-            MouseEventKind::ScrollRight => Some(TuiEvent::Scroll {
-                x: mouse.column,
-                y: mouse.row,
-                delta_x: 1,
-                delta_y: 0,
-            }),
-        },
         CrosstermEvent::Resize(width, height) => Some(TuiEvent::Resize { width, height }),
         CrosstermEvent::FocusGained => Some(TuiEvent::FocusGained),
         CrosstermEvent::FocusLost => Some(TuiEvent::FocusLost),
@@ -72,6 +85,14 @@ fn translate_button(button: MouseButton) -> MouseButtonKind {
         MouseButton::Left => MouseButtonKind::Left,
         MouseButton::Right => MouseButtonKind::Right,
         MouseButton::Middle => MouseButtonKind::Middle,
+    }
+}
+
+fn translate_modifiers(modifiers: KeyModifiers) -> TuiModifiers {
+    TuiModifiers {
+        shift: modifiers.contains(KeyModifiers::SHIFT),
+        ctrl: modifiers.contains(KeyModifiers::CONTROL),
+        alt: modifiers.contains(KeyModifiers::ALT),
     }
 }
 
@@ -97,13 +118,8 @@ fn translate_key(key: KeyEvent) -> TuiKeyEvent {
         other => TuiKey::Other(format!("{other:?}")),
     };
 
-    let modifiers = key.modifiers;
     TuiKeyEvent {
         key: tui_key,
-        modifiers: TuiModifiers {
-            shift: modifiers.contains(KeyModifiers::SHIFT),
-            ctrl: modifiers.contains(KeyModifiers::CONTROL),
-            alt: modifiers.contains(KeyModifiers::ALT),
-        },
+        modifiers: translate_modifiers(key.modifiers),
     }
 }

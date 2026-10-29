@@ -21,11 +21,12 @@ mod mouse;
 mod text;
 
 use convert::install_event_converter;
-use keyboard::handle_key;
+use keyboard::{handle_key, handle_key_up};
 use mouse::{
     handle_click, handle_mouse_button, handle_mouse_down, handle_mouse_move, handle_scroll,
 };
 use text::paste;
+pub use text::TuiClipboardEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Flow {
@@ -55,24 +56,43 @@ pub fn handle_event(dom: &VirtualDom, renderer: &mut TuiRenderer, event: TuiEven
     renderer.sync_focus_baseline();
     match event {
         TuiEvent::Key(key) => handle_key(dom, renderer, key),
-        TuiEvent::MouseClick { x, y } => {
-            handle_click(dom, renderer, x, y);
+        TuiEvent::KeyUp(key) => {
+            handle_key_up(dom, renderer, key);
             Flow::Continue
         }
-        TuiEvent::MouseDown { x, y, button } => {
-            handle_mouse_down(dom, renderer, x, y, button);
+        TuiEvent::MouseClick { x, y, modifiers } => {
+            handle_click(dom, renderer, x, y, modifiers);
             Flow::Continue
         }
-        TuiEvent::MouseUp { x, y, button } => {
-            handle_mouse_button(dom, renderer, x, y, button, "mouseup");
+        TuiEvent::MouseDown {
+            x,
+            y,
+            button,
+            modifiers,
+        } => {
+            handle_mouse_down(dom, renderer, x, y, button, modifiers);
             Flow::Continue
         }
-        TuiEvent::MouseMove { x, y } => {
-            handle_mouse_move(dom, renderer, x, y);
+        TuiEvent::MouseUp {
+            x,
+            y,
+            button,
+            modifiers,
+        } => {
+            handle_mouse_button(dom, renderer, x, y, button, modifiers, "mouseup");
             Flow::Continue
         }
-        TuiEvent::MouseDrag { x, y, button } => {
-            handle_mouse_button(dom, renderer, x, y, button, "mousedrag");
+        TuiEvent::MouseMove { x, y, modifiers } => {
+            handle_mouse_move(dom, renderer, x, y, modifiers);
+            Flow::Continue
+        }
+        TuiEvent::MouseDrag {
+            x,
+            y,
+            button,
+            modifiers,
+        } => {
+            handle_mouse_button(dom, renderer, x, y, button, modifiers, "mousedrag");
             Flow::Continue
         }
         TuiEvent::Scroll {
@@ -80,8 +100,9 @@ pub fn handle_event(dom: &VirtualDom, renderer: &mut TuiRenderer, event: TuiEven
             y,
             delta_x,
             delta_y,
+            modifiers,
         } => {
-            handle_scroll(dom, renderer, x, y, delta_x, delta_y);
+            handle_scroll(dom, renderer, x, y, delta_x, delta_y, modifiers);
             Flow::Continue
         }
         TuiEvent::Paste(text) => {
@@ -92,7 +113,14 @@ pub fn handle_event(dom: &VirtualDom, renderer: &mut TuiRenderer, event: TuiEven
             crate::terminal::set_terminal_size(dom, width, height);
             Flow::Continue
         }
-        TuiEvent::FocusGained | TuiEvent::FocusLost => Flow::Continue,
+        TuiEvent::FocusGained => {
+            crate::terminal::set_terminal_focus(dom, true);
+            Flow::Continue
+        }
+        TuiEvent::FocusLost => {
+            crate::terminal::set_terminal_focus(dom, false);
+            Flow::Continue
+        }
         TuiEvent::Quit => Flow::Quit,
     }
 }

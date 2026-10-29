@@ -10,5 +10,5 @@ pub use charts::{
 };
 pub use theme::{use_theme, Theme, ThemeProvider};
 pub use widgets::{
-    Button, Checkbox, Container, Input, List, ListItem, Modal, Tabs, Text, TextArea,
+    Animate, Button, Checkbox, Container, Input, List, ListItem, Modal, Tabs, Text, TextArea,
 };

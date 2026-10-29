@@ -20,18 +20,14 @@ fn App() -> Element {
     jsx! {
         <ThemeProvider>
             <Container
-                border="rounded"
-                border-color="#f9e2af"
-                padding="1"
-                gap={Some(1)}
-                height="100%"
+                class="flex flex-col border border-yellow-200 rounded p-1 gap-1 h-full"
                 title="Overlays"
             >
-                <Text bold>A modal stays above the page and owns the keyboard.</Text>
-                <Text dim>
+                <span class="bold">A modal stays above the page and owns the keyboard.</span>
+                <span class="dim">
                     {"Tab cycles inside the dialog · Escape or a backdrop click closes it · Ctrl+C quits"}
-                </Text>
-                <div style="direction:row;gap:2">
+                </span>
+                <div class="flex flex-row gap-2">
                     <Button
                         variant="danger"
                         disabled={open()}
@@ -39,19 +35,20 @@ fn App() -> Element {
                     >
                         {"Delete project…"}
                     </Button>
-                    <Text dim>{format!("deleted {} time(s)", deletions())}</Text>
+                    <span class="dim">{format!("deleted {} time(s)", deletions())}</span>
                 </div>
                 {(!toast().is_empty()).then(|| jsx! {
                     <div
-                        style="position:absolute;right:1;bottom:1;layer:200;border:rounded;padding:0 1;bg:#313244;color:#a6e3a1;focusable:false"
+                        class="absolute right-1 bottom-1 z-[200] border rounded px-1 bg-slate-700 text-green-300"
+                        style="focusable:false"
                         onclick=move |_| toast.set(String::new())
                     >
                         {format!("{} · click to dismiss", toast())}
                     </div>
                 })}
                 <Modal open={open()} title="Confirm delete" on_close=move |_| open.set(false)>
-                    <Text>{"Delete 'staging.toml'? This cannot be undone."}</Text>
-                    <div style="direction:row;gap:2;justify:end">
+                    <span>{"Delete 'staging.toml'? This cannot be undone."}</span>
+                    <div class="flex flex-row gap-2 justify-end">
                         <Button
                             variant="danger"
                             on_click=move |_| {

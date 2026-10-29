@@ -3,17 +3,15 @@
 //! ```ignore
 //! # use reactx::prelude::*;
 //! fn App() -> Element {
-//!     rsx! {
-//!         Router {
-//!             routes: routes! {
-//!                 "/" => Home,
-//!                 "/todo/:id" => Todo,
-//!             },
-//!         }
+//!     jsx! {
+//!         <Router routes={routes! {
+//!             "/" => Home,
+//!             "/todo/:id" => Todo,
+//!         }} />
 //!     }
 //! }
-//! # fn Home() -> Element { rsx! { "home" } }
-//! # fn Todo() -> Element { rsx! { "todo" } }
+//! # fn Home() -> Element { jsx! { <span>home</span> } }
+//! # fn Todo() -> Element { jsx! { <span>todo</span> } }
 //! ```
 //!
 //! `ignore` because the example needs the `reactx` facade crate, which depends

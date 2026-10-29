@@ -6,10 +6,14 @@
 
 mod caret;
 mod change;
+mod clipboard;
+mod events;
 mod harness;
 mod modal;
 mod mouse;
+mod rapid;
 mod scroll;
 mod selection;
 mod size;
+mod terminal_focus;
 mod textarea;

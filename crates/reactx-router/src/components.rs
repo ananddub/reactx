@@ -48,13 +48,20 @@ pub fn Router(
 
 /// A clickable link that navigates within the router.
 #[component]
-pub fn Link(to: String, children: Element) -> Element {
+pub fn Link(
+    to: String,
+    /// Tailwind-style utility classes, applied beneath the inline style.
+    #[props(default)]
+    class: String,
+    children: Element,
+) -> Element {
     let theme = use_theme();
     let style = format!("color:{};underline:true", theme.accent.to_css());
     let target = to.clone();
 
     rsx! {
         span {
+            class: class,
             style: style,
             onclick: move |_| navigate(target.clone()),
             {children}

@@ -4,22 +4,25 @@ use std::any::Any;
 use std::rc::Rc;
 
 use dioxus_core::{ElementId, Event, VirtualDom};
-use dioxus_html::input_data::keyboard_types::Modifiers;
 use dioxus_html::PlatformEventData;
-use reactx_core::{MouseButtonKind, NodeId, NodeTree, TuiKeyEvent};
+use reactx_core::{KeyModifiers, MouseButtonKind, NodeId, NodeTree, TuiKeyEvent};
 
 use super::convert::{map_key, map_modifiers};
 use super::data::{TuiFocusEvent, TuiFormEvent, TuiKeyboardEvent, TuiMouseEvent, TuiWheelEvent};
 
+/// Dispatch an event and report whether its default action is still enabled,
+/// so callers can honor `event.prevent_default()` called by a listener.
 pub(super) fn dispatch(
     dom: &VirtualDom,
     element: ElementId,
     name: &str,
     data: Rc<dyn Any>,
     bubbles: bool,
-) {
-    dom.runtime()
-        .handle_event(name, Event::new(data, bubbles), element);
+) -> bool {
+    let event = Event::new(data, bubbles);
+    let probe = event.clone();
+    dom.runtime().handle_event(name, event, element);
+    probe.default_action_enabled()
 }
 
 /// Dispatch an event to the nearest node at or above `start` that listens for
@@ -36,19 +39,32 @@ pub(super) fn dispatch_chain(
     name: &str,
     data: Rc<dyn Any>,
 ) {
+    dispatch_chain_default(dom, tree, start, name, data);
+}
+
+/// Like [`dispatch_chain`], but also reports whether the default action is
+/// still enabled after the listeners ran (`true` when nothing listened).
+pub(super) fn dispatch_chain_default(
+    dom: &VirtualDom,
+    tree: &NodeTree,
+    start: NodeId,
+    name: &str,
+    data: Rc<dyn Any>,
+) -> bool {
     let mut current = Some(start);
     while let Some(id) = current {
         let Some(node) = tree.get(id) else {
-            return;
+            return true;
         };
         if node.events.contains(name) {
-            if let Some(element) = tree.element_for_node(id) {
-                dispatch(dom, element, name, data, true);
-            }
-            return;
+            let Some(element) = tree.element_for_node(id) else {
+                return true;
+            };
+            return dispatch(dom, element, name, data, true);
         }
         current = node.parent;
     }
+    true
 }
 
 pub(super) fn dispatch_form(
@@ -62,22 +78,57 @@ pub(super) fn dispatch_form(
     dispatch_chain(dom, tree, node, name, Rc::new(data));
 }
 
+/// Pointer state carried by every mouse event.
+#[derive(Clone, Copy)]
+pub(super) struct Pointer {
+    pub(super) x: f64,
+    pub(super) y: f64,
+    pub(super) button: MouseButtonKind,
+    pub(super) modifiers: KeyModifiers,
+}
+
+impl Pointer {
+    pub(super) fn at(x: u16, y: u16, button: MouseButtonKind, modifiers: KeyModifiers) -> Self {
+        Self {
+            x: x as f64,
+            y: y as f64,
+            button,
+            modifiers,
+        }
+    }
+
+    fn data(self) -> Rc<dyn Any> {
+        Rc::new(PlatformEventData::new(Box::new(TuiMouseEvent {
+            x: self.x,
+            y: self.y,
+            modifiers: map_modifiers(self.modifiers),
+            button: self.button,
+        })))
+    }
+}
+
 pub(super) fn dispatch_mouse(
     dom: &VirtualDom,
     tree: &NodeTree,
     node: NodeId,
     name: &str,
-    x: f64,
-    y: f64,
-    button: MouseButtonKind,
+    pointer: Pointer,
 ) {
-    let data = PlatformEventData::new(Box::new(TuiMouseEvent {
-        x,
-        y,
-        modifiers: Modifiers::empty(),
-        button,
-    }));
-    dispatch_chain(dom, tree, node, name, Rc::new(data));
+    dispatch_chain(dom, tree, node, name, pointer.data());
+}
+
+/// Dispatch a mouse event to one element only, without bubbling
+/// (`mouseenter`/`mouseleave` follow browser semantics here).
+pub(super) fn dispatch_mouse_self(
+    dom: &VirtualDom,
+    tree: &NodeTree,
+    node: NodeId,
+    name: &str,
+    pointer: Pointer,
+) {
+    if let Some(element) = tree.element_for_node(node) {
+        dispatch(dom, element, name, pointer.data(), false);
+    }
 }
 
 pub(super) fn dispatch_keyboard(
@@ -96,20 +147,27 @@ pub(super) fn dispatch_keyboard(
     dispatch_chain(dom, tree, node, name, Rc::new(data));
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct WheelDelta {
+    pub(super) x: i32,
+    pub(super) y: i32,
+}
+
 pub(super) fn dispatch_wheel(
     dom: &VirtualDom,
     tree: &NodeTree,
     node: NodeId,
     x: u16,
     y: u16,
-    delta_x: i32,
-    delta_y: i32,
+    delta: WheelDelta,
+    modifiers: KeyModifiers,
 ) {
     let data = PlatformEventData::new(Box::new(TuiWheelEvent {
         x: x as f64,
         y: y as f64,
-        delta_x: delta_x as f64,
-        delta_y: delta_y as f64,
+        delta_x: delta.x as f64,
+        delta_y: delta.y as f64,
+        modifiers: map_modifiers(modifiers),
     }));
     dispatch_chain(dom, tree, node, "wheel", Rc::new(data));
 }
