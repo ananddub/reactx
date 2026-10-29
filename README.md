@@ -756,9 +756,6 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo build -p reactx --examples
 ```
 
-`.github/workflows/ci.yml` runs formatting, clippy with warnings denied, the
-test suite and the examples on every push and pull request.
-
 - Unit tests cover style/colour parsing, the node tree, layout measurement,
   focus order and routing.
 - `crates/reactx-tui/tests/integration.rs` drives a `VirtualDom` through the
@@ -806,8 +803,7 @@ test suite and the examples on every push and pull request.
 - [x] **Day 6 — Router & store.** `routes!`, params, query strings, in-memory
   history, `Link`, and a global `Store<T>` that rerenders subscribers.
 - [x] **Day 7 — Async, examples, docs.** `use_fetch`, `use_websocket`,
-  `Suspense`, five runnable examples, headless render tests, docs and CI-ready
-  commands.
+  `Suspense`, five runnable examples, headless render tests and docs.
 - [x] **Day 8 — Data widgets.** Gauge/LineGauge, Table, BarChart, Sparkline,
   Chart, Canvas (shapes + world map), Scrollbar and an interactive Calendar,
   wired through custom attributes and Ratatui, plus the `dashboard` example.
@@ -818,7 +814,7 @@ test suite and the examples on every push and pull request.
 - [x] **Day 10 — Rich input and mouse.** Mouse down/up/move/drag and hover
   events, selection with `Ctrl+A`/`Ctrl+C`/`Ctrl+X` over OSC 52, multi-line
   `TextArea` with `Ctrl+Enter`, `change` on blur, configurable `Canvas` markers,
-  `use_terminal_size` with an adaptive dashboard, and CI.
+  `use_terminal_size` with an adaptive dashboard.
 - [x] **Day 11 — Full event parity.** `onkeyup`, document-level key handling
   without focus, mouse modifiers on every pointer payload, `ondoubleclick`,
   `oncontextmenu`, and non-bubbling `onmouseenter`/`onmouseleave`.
