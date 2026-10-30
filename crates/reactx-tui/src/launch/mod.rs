@@ -1,35 +1,62 @@
-//! Terminal lifecycle, the async event loop, and `launch`.
+//! Terminal lifecycle, the async event loop, and the launchers.
 
 use std::io;
 use std::time::Duration;
 
-use crossterm::cursor::Show;
-use crossterm::event::{
-    DisableBracketedPaste, DisableFocusChange, DisableMouseCapture, EnableBracketedPaste,
-    EnableFocusChange, EnableMouseCapture, Event as CrosstermEvent, EventStream,
-};
-use crossterm::execute;
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
-};
+use crossterm::event::Event as CrosstermEvent;
 use dioxus_core::{Element, VirtualDom};
 use futures_util::future::poll_immediate;
 use futures_util::{Stream, StreamExt};
-use ratatui::backend::CrosstermBackend;
-use ratatui::Terminal;
 use reactx_core::TuiEvent;
 use tokio::task::LocalSet;
 
+mod guard;
+mod run;
 mod translate;
+
+pub use crate::config::LaunchOptions;
+pub use guard::{install_panic_hook, restore_terminal};
 
 use crate::events::{self, Flow};
 use crate::TuiRenderer;
 
-/// Run a ReactX application until the user quits.
+/// How a launcher claims the screen.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Mode {
+    /// Alternate screen, covering the whole terminal.
+    Fullscreen,
+    /// A live region of `height` rows at the bottom of the screen, leaving the
+    /// lines above it in the scrollback.
+    Inline(u16),
+}
+
+/// Run a ReactX application fullscreen until the user quits.
 ///
 /// The VirtualDom is `!Send`, so the terminal loop runs on its own thread with
 /// a current-thread runtime. This keeps `launch` usable from `#[tokio::main]`.
 pub async fn launch(app: fn() -> Element) {
+    launch_with(app, LaunchOptions::new()).await;
+}
+
+/// Run a ReactX application fullscreen with custom [`LaunchOptions`].
+pub async fn launch_with(app: fn() -> Element, options: LaunchOptions) {
+    launch_mode(app, Mode::Fullscreen, options).await;
+}
+
+/// Run a ReactX application in an inline viewport of `height` rows.
+///
+/// Lines emitted by the `<Static>` widget are written above the live view and
+/// stay in the terminal's scrollback after the app exits.
+pub async fn launch_inline(app: fn() -> Element, height: u16) {
+    launch_inline_with(app, height, LaunchOptions::new()).await;
+}
+
+/// Run a ReactX application inline with custom [`LaunchOptions`].
+pub async fn launch_inline_with(app: fn() -> Element, height: u16, options: LaunchOptions) {
+    launch_mode(app, Mode::Inline(height.max(1)), options).await;
+}
+
+async fn launch_mode(app: fn() -> Element, mode: Mode, options: LaunchOptions) {
     let (tx, rx) = tokio::sync::oneshot::channel::<io::Result<()>>();
 
     let spawned = std::thread::Builder::new()
@@ -41,7 +68,7 @@ pub async fn launch(app: fn() -> Element) {
             {
                 Ok(runtime) => {
                     let local = LocalSet::new();
-                    local.block_on(&runtime, async move { run(app).await })
+                    local.block_on(&runtime, async move { run::run(app, mode, options).await })
                 }
                 Err(err) => Err(err),
             };
@@ -58,83 +85,6 @@ pub async fn launch(app: fn() -> Element) {
         Ok(Err(err)) => eprintln!("reactx: {err}"),
         Err(_) => {}
     }
-}
-
-/// Restore the terminal to a usable state. Safe to call at any time.
-pub fn restore_terminal() {
-    let _ = disable_raw_mode();
-    let _ = execute!(
-        io::stdout(),
-        DisableMouseCapture,
-        DisableBracketedPaste,
-        DisableFocusChange,
-        LeaveAlternateScreen,
-        Show
-    );
-}
-
-struct TerminalGuard;
-
-impl TerminalGuard {
-    fn enter() -> io::Result<Self> {
-        enable_raw_mode()?;
-        execute!(
-            io::stdout(),
-            EnterAlternateScreen,
-            EnableMouseCapture,
-            EnableBracketedPaste,
-            EnableFocusChange,
-            Show
-        )?;
-        Ok(Self)
-    }
-}
-
-impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        restore_terminal();
-    }
-}
-
-async fn run(app: fn() -> Element) -> io::Result<()> {
-    let _guard = TerminalGuard::enter()?;
-    let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend)?;
-    terminal.clear()?;
-
-    let mut dom = VirtualDom::new(app);
-    let mut renderer = TuiRenderer::new();
-    dom.rebuild(&mut renderer);
-    let size = terminal.size()?;
-    crate::terminal::set_terminal_size(&dom, size.width, size.height);
-    dom.render_immediate(&mut renderer);
-
-    let mut stream = EventStream::new();
-
-    loop {
-        renderer.paint(&mut terminal)?;
-
-        tokio::select! {
-            biased;
-            maybe_event = stream.next() => {
-                let Some(Ok(event)) = maybe_event else {
-                    break;
-                };
-                if !handle_batch(event, &mut stream, &dom, &mut renderer).await {
-                    break;
-                }
-                dom.render_immediate(&mut renderer);
-            }
-            _ = dom.wait_for_work() => {
-                dom.render_immediate(&mut renderer);
-            }
-            // Keep frames coming while an effect is running; screen effects
-            // advance in `paint`, not in the VirtualDom's task queue.
-            _ = tokio::time::sleep(EFFECT_FRAME), if renderer.effects_active() => {}
-        }
-    }
-
-    Ok(())
 }
 
 /// Upper bound on events drained before the next render, so a continuous

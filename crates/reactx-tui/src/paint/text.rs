@@ -3,7 +3,7 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
-use reactx_core::TextAlign;
+use reactx_core::{TextAlign, TextWrap};
 
 use super::cells::put_line;
 use super::layout;
@@ -19,11 +19,12 @@ pub(super) fn draw_text(
     align: TextAlign,
     style: Style,
     vertical_center: bool,
+    text_wrap: Option<TextWrap>,
 ) {
     if area.width == 0 || area.height == 0 || text.is_empty() {
         return;
     }
-    let lines = layout::wrap(text, Some(area.width as usize));
+    let lines = layout::wrap_mode(text, Some(area.width as usize), text_wrap);
     let start_y = if vertical_center {
         area.y + area.height.saturating_sub(lines.len() as u16) / 2
     } else {

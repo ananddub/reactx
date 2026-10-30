@@ -13,7 +13,7 @@ use crate::TuiRenderer;
 mod convert;
 mod data;
 mod dispatch;
-mod focus;
+pub(crate) mod focus;
 mod input;
 mod keyboard;
 mod keymap;
@@ -106,6 +106,7 @@ pub fn handle_event(dom: &VirtualDom, renderer: &mut TuiRenderer, event: TuiEven
             Flow::Continue
         }
         TuiEvent::Paste(text) => {
+            crate::runtime::input::dispatch_paste(dom, &text);
             paste(dom, renderer, &text);
             Flow::Continue
         }

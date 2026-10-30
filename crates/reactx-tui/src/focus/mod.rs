@@ -1,6 +1,6 @@
 //! Keyboard focus ring over the terminal DOM.
 
-use reactx_core::{NodeId, NodeTree};
+use reactx_core::{NodeId, NodeTree, TuiNode};
 
 /// The result of a focus transition, used to emit `blur`/`focus` events.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -51,7 +51,7 @@ impl FocusManager {
             self.trap = trap;
         }
 
-        let focusables = tree.focusable_ids_in_order();
+        let focusables = focusable_nodes(tree);
         self.order = match trap {
             Some(trap) => focusables
                 .into_iter()
@@ -164,3 +164,29 @@ impl FocusManager {
 
 #[cfg(test)]
 mod tests;
+
+/// Focusable nodes in document order. Elements registered through Ink-style
+/// `use_focus` join the ring even without a `focusable` attribute.
+fn focusable_nodes(tree: &NodeTree) -> Vec<NodeId> {
+    tree.nodes_in_order()
+        .into_iter()
+        .filter(|id| *id != tree.root_id())
+        .filter(|id| {
+            !tree.ancestors(*id).iter().any(|ancestor| {
+                tree.get(*ancestor)
+                    .is_some_and(|node| node.is_hidden() || node.is_placeholder())
+            })
+        })
+        .filter(|id| {
+            tree.get(*id)
+                .is_some_and(|node| !node.is_hidden() && (node.is_focusable() || registered(node)))
+        })
+        .collect()
+}
+
+fn registered(node: &TuiNode) -> bool {
+    node.attrs
+        .custom
+        .get("id")
+        .is_some_and(|id| crate::runtime::focus::is_registered(id))
+}

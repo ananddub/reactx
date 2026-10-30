@@ -1,6 +1,6 @@
 //! Measured text leaves and text-input classification.
 
-use reactx_core::{NodeTree, TuiNode};
+use reactx_core::{NodeTree, TextWrap, TuiNode};
 
 use super::text::{checkbox_text, widget_kind};
 
@@ -11,6 +11,7 @@ pub(crate) struct Leaf {
     /// Soft-wrap long lines to the available width. Text inputs scroll
     /// horizontally instead.
     pub wrap: bool,
+    pub mode: Option<TextWrap>,
 }
 
 pub(crate) fn leaf_for(tree: &NodeTree, node: &TuiNode) -> Option<Leaf> {
@@ -33,6 +34,7 @@ pub(crate) fn leaf_for(tree: &NodeTree, node: &TuiNode) -> Option<Leaf> {
     Some(Leaf {
         text,
         wrap: !matches!(kind, "input" | "textarea"),
+        mode: node.attrs.text_wrap,
     })
 }
 

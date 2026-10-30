@@ -13,3 +13,6 @@ categories = ["command-line-interface"]
 [dependencies]
 dioxus.workspace = true
 reactx-ui.workspace = true
+form_urlencoded.workspace = true
+percent-encoding.workspace = true
+matchit.workspace = true

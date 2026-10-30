@@ -11,29 +11,34 @@ use super::Flow;
 use crate::TuiRenderer;
 
 pub(super) fn handle_key(dom: &VirtualDom, renderer: &mut TuiRenderer, key: TuiKeyEvent) -> Flow {
+    crate::runtime::input::dispatch(dom, &key);
     if key.modifiers.ctrl && matches!(key.key, TuiKey::Char('c') | TuiKey::Char('C')) {
         if copy_selection(dom, renderer) {
             return Flow::Continue;
         }
-        return Flow::Quit;
+        if crate::config::with(|config| config.exit_on_ctrl_c) {
+            return Flow::Quit;
+        }
+        return Flow::Continue;
     }
     if key.modifiers.ctrl && matches!(key.key, TuiKey::Char('x') | TuiKey::Char('X')) {
         cut_selection(dom, renderer);
         return Flow::Continue;
     }
 
+    let focus_enabled = crate::runtime::focus::is_enabled();
     match key.key {
-        TuiKey::Tab if key.modifiers.shift => {
+        TuiKey::Tab if key.modifiers.shift && focus_enabled => {
             let change = renderer.focus.focus_prev();
             apply_focus(dom, renderer, change);
             return Flow::Continue;
         }
-        TuiKey::BackTab => {
+        TuiKey::BackTab if focus_enabled => {
             let change = renderer.focus.focus_prev();
             apply_focus(dom, renderer, change);
             return Flow::Continue;
         }
-        TuiKey::Tab => {
+        TuiKey::Tab if focus_enabled => {
             let change = renderer.focus.focus_next();
             apply_focus(dom, renderer, change);
             return Flow::Continue;

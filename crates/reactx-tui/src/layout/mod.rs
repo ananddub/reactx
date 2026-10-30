@@ -16,12 +16,14 @@ mod leaf;
 mod metrics;
 mod style;
 mod text;
+mod wrap;
 
 pub(crate) use geometry::{inner_rect, visible_rect};
 pub(crate) use leaf::{is_text_input, is_textarea};
 pub(crate) use metrics::effective_border;
 pub(crate) use text::checkbox_text;
 pub use text::{node_label, str_width, widget_kind, wrap};
+pub(crate) use wrap::wrap_mode;
 
 use build::{build, measure_leaf};
 use collect::collect_rects;
@@ -62,7 +64,7 @@ pub fn compute_full(tree: &NodeTree, area: Rect) -> LayoutResult {
         root_taffy,
         available,
         |known, available, _id, context, _style| match context {
-            Some(leaf) => measure_leaf(&leaf.text, leaf.wrap, known, available),
+            Some(leaf) => measure_leaf(leaf, known, available),
             None => Size {
                 width: known.width.unwrap_or(0.0),
                 height: known.height.unwrap_or(0.0),
@@ -72,7 +74,16 @@ pub fn compute_full(tree: &NodeTree, area: Rect) -> LayoutResult {
 
     let mut out = LayoutResult::default();
     collect_rects(
-        &taffy, &mapping, tree, root_taffy, 0.0, 0.0, 0.0, 0.0, area, &mut out,
+        &taffy,
+        &mapping,
+        tree,
+        root_taffy,
+        area.x as f32,
+        area.y as f32,
+        0.0,
+        0.0,
+        area,
+        &mut out,
     );
     out
 }
@@ -116,8 +127,39 @@ mod tests {
     }
 
     #[test]
+    fn aspect_ratio_derives_height_from_width() {
+        let mut tree = NodeTree::new();
+        let root = tree.root_id();
+        let attrs = StyleProps {
+            width: Some(reactx_core::Dim::Cells(10.0)),
+            aspect_ratio: Some(2.0),
+            ..StyleProps::default()
+        };
+        let node = tree.insert_node("box", None);
+        tree.get_mut(node).unwrap().attrs = attrs;
+        tree.append_child(root, node);
+
+        let layout = compute(&tree, Rect::new(0, 0, 20, 20));
+        assert_eq!(layout[&node].width, 10);
+        assert_eq!(layout[&node].height, 5);
+    }
+
+    #[test]
     fn effective_border_defaults_for_input() {
         let node = styled("input", StyleProps::default());
         assert_eq!(effective_border(&node), BorderKind::Single);
+    }
+
+    #[test]
+    fn rects_are_absolute_to_the_area() {
+        let mut tree = NodeTree::new();
+        let root = tree.root_id();
+        let node = tree.insert_node("span", None);
+        tree.append_child(root, node);
+
+        let layout = compute(&tree, Rect::new(5, 3, 20, 10));
+        assert_eq!(layout[&root], Rect::new(5, 3, 20, 10));
+        assert_eq!(layout[&node].x, 5);
+        assert_eq!(layout[&node].y, 3);
     }
 }

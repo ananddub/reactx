@@ -7,10 +7,10 @@
 //!     let mut count = use_signal(|| 0);
 //!     jsx! {
 //!         <ThemeProvider>
-//!             <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+//!             <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
 //!                 <span class="text-green-300 bold">Count: {count}</span>
 //!                 <Button on_click=move |_| count += 1>+1</Button>
-//!             </Container>
+//!             </Box>
 //!         </ThemeProvider>
 //!     }
 //! }
@@ -26,13 +26,15 @@ pub mod store;
 
 pub use dioxus::prelude::*;
 pub use jsx::{jsx_node, IntoJsxElement, IntoJsxNode};
+#[cfg(feature = "async")]
 pub use reactx_async::{use_fetch, use_websocket, SocketState, Suspense};
 pub use reactx_core::{
-    Align, BorderKind, Dim, Edges, FlexDir, Justify, KeyModifiers, MouseButtonKind, NamedColor,
-    NodeId, NodeTree, Overflow, Position, StyleProps, TextAlign, TitleAlign, TuiColor, TuiEvent,
-    TuiKey, TuiKeyEvent, TuiNode,
+    Align, BorderKind, Dim, Edges, FlexDir, Justify, KeyModifiers, Line, MouseButtonKind,
+    NamedColor, NodeId, NodeTree, Overflow, Position, Span, StyleProps, TextAlign, TextWrap,
+    TitleAlign, TuiColor, TuiEvent, TuiKey, TuiKeyEvent, TuiNode,
 };
 pub use reactx_macro::jsx;
+#[cfg(feature = "router")]
 pub use reactx_router::{
     match_route, navigate, routes, use_location, use_param, use_query, use_router, Link, Query,
     Route, RouteMatch, Router, RouterContext,
@@ -43,13 +45,18 @@ pub use reactx_tui::effects::{
 };
 pub use reactx_tui::events::{handle_event, onmousedrag, Flow, TuiClipboardEvent};
 pub use reactx_tui::{
-    launch, restore_terminal, use_animation_frame, use_color_tween, use_spring, use_terminal_focus,
-    use_terminal_size, use_ticker, use_tween, Spring, TuiRenderer, Tween,
+    install_panic_hook, launch, launch_inline, launch_inline_with, launch_with, measure_element,
+    render_to_string, restore_terminal, use_animation_frame, use_app, use_box_metrics,
+    use_color_tween, use_cursor, use_focus, use_focus_manager, use_input, use_input_when,
+    use_is_screen_reader_enabled, use_paste, use_paste_when, use_spring, use_stderr, use_stdin,
+    use_stdout, use_terminal_focus, use_terminal_size, use_ticker, use_tween, use_window_size,
+    AppHandle, BoxMetrics, CursorHandle, FocusManagerHandle, LaunchOptions, RenderCallback,
+    RenderMetrics, Spring, StderrHandle, StdinHandle, StdoutHandle, TuiRenderer, Tween,
 };
 pub use reactx_ui::{
-    use_theme, Animate, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset,
-    Checkbox, Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table, Tabs,
-    Text, TextArea, Theme, ThemeProvider,
+    use_theme, Animate, BarChart, Box, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset,
+    Checkbox, Gauge, Input, List, ListItem, Modal, Newline, Scrollbar, Spacer, Sparkline, Static,
+    Table, Tabs, Text, TextArea, Theme, ThemeProvider, Transform,
 };
 pub use store::Store;
 
@@ -59,12 +66,14 @@ pub mod prelude {
 
     pub use crate::jsx::{jsx_node, IntoJsxElement, IntoJsxNode};
     pub use crate::store::Store;
+    #[cfg(feature = "async")]
     pub use reactx_async::{use_fetch, use_websocket, SocketState, Suspense};
     pub use reactx_core::{
-        BorderKind, Dim, Edges, KeyModifiers, MouseButtonKind, NamedColor, NodeId, NodeTree,
-        StyleProps, TuiColor, TuiEvent, TuiKey, TuiKeyEvent, TuiNode,
+        BorderKind, Dim, Edges, KeyModifiers, Line, MouseButtonKind, NamedColor, NodeId, NodeTree,
+        Span, StyleProps, TuiColor, TuiEvent, TuiKey, TuiKeyEvent, TuiNode,
     };
     pub use reactx_macro::jsx;
+    #[cfg(feature = "router")]
     pub use reactx_router::{
         navigate, routes, use_location, use_param, use_query, use_router, Link, Query, Route,
         RouteMatch, Router, RouterContext,
@@ -75,12 +84,18 @@ pub mod prelude {
     };
     pub use reactx_tui::events::{handle_event, onmousedrag, Flow, TuiClipboardEvent};
     pub use reactx_tui::{
-        launch, restore_terminal, use_animation_frame, use_color_tween, use_spring,
-        use_terminal_focus, use_terminal_size, use_ticker, use_tween, Spring, TuiRenderer, Tween,
+        install_panic_hook, launch, launch_inline, launch_inline_with, launch_with,
+        measure_element, render_to_string, restore_terminal, use_animation_frame, use_app,
+        use_box_metrics, use_color_tween, use_cursor, use_focus, use_focus_manager, use_input,
+        use_input_when, use_is_screen_reader_enabled, use_paste, use_paste_when, use_spring,
+        use_stderr, use_stdin, use_stdout, use_terminal_focus, use_terminal_size, use_ticker,
+        use_tween, use_window_size, AppHandle, BoxMetrics, CursorHandle, FocusManagerHandle,
+        LaunchOptions, RenderCallback, RenderMetrics, Spring, StderrHandle, StdinHandle,
+        StdoutHandle, TuiRenderer, Tween,
     };
     pub use reactx_ui::{
-        use_theme, Animate, BarChart, Button, Calendar, Canvas, CanvasShape, Chart, ChartDataset,
-        Checkbox, Container, Gauge, Input, List, ListItem, Modal, Scrollbar, Sparkline, Table,
-        Tabs, Text, TextArea, Theme, ThemeProvider,
+        use_theme, Animate, BarChart, Box, Button, Calendar, Canvas, CanvasShape, Chart,
+        ChartDataset, Checkbox, Gauge, Input, List, ListItem, Modal, Newline, Scrollbar, Spacer,
+        Sparkline, Static, Table, Tabs, Text, TextArea, Theme, ThemeProvider, Transform,
     };
 }

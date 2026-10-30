@@ -5,7 +5,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use reactx_core::{NodeId, TextAlign, TuiColor};
 
-use super::border::draw_border;
+use super::border::{border_colors, draw_border};
 use super::cells::{fill_bg, modifiers};
 use super::input::paint_input;
 use super::scratch::paint_widget;
@@ -66,7 +66,7 @@ pub(super) fn paint(
             border,
             node.attrs.title.as_deref(),
             node.attrs.title_align.unwrap_or_default(),
-            border_color,
+            border_colors(node, border_color),
             bg,
         );
     }
@@ -80,7 +80,18 @@ pub(super) fn paint(
     match layout::widget_kind(node) {
         "#text" => {
             let text = node.text.clone().unwrap_or_default();
-            draw_text(buf, rect, dx, dy, clip, &text, align, content_style, false);
+            draw_text(
+                buf,
+                rect,
+                dx,
+                dy,
+                clip,
+                &text,
+                align,
+                content_style,
+                false,
+                node.attrs.text_wrap,
+            );
         }
         "text" => {
             let text = ctx.tree.collect_text(id);
@@ -94,6 +105,7 @@ pub(super) fn paint(
                 align,
                 content_style,
                 false,
+                node.attrs.text_wrap,
             );
         }
         "button" => {
@@ -102,7 +114,18 @@ pub(super) fn paint(
                 modifier |= Modifier::REVERSED;
             }
             let style = content_style.add_modifier(Modifier::BOLD);
-            draw_text(buf, interior, dx, dy, clip, &text, align, style, true);
+            draw_text(
+                buf,
+                interior,
+                dx,
+                dy,
+                clip,
+                &text,
+                align,
+                style,
+                true,
+                node.attrs.text_wrap,
+            );
         }
         "input" => paint_input(
             ctx,
@@ -150,6 +173,7 @@ pub(super) fn paint(
                 TextAlign::Left,
                 style,
                 false,
+                node.attrs.text_wrap,
             );
         }
         "spacer" => {}

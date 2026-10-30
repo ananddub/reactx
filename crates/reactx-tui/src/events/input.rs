@@ -2,6 +2,7 @@
 
 use dioxus_core::VirtualDom;
 use reactx_core::{NodeId, TuiKey, TuiKeyEvent};
+use unicode_segmentation::UnicodeSegmentation;
 
 use super::dispatch::dispatch_form;
 use crate::TuiRenderer;
@@ -17,21 +18,22 @@ pub(super) fn handle_input_key(
     };
     let multiline = crate::layout::is_textarea(node);
     let value = node.attrs.value.clone().unwrap_or_default();
-    let mut chars: Vec<char> = value.chars().collect();
+    let mut graphemes: Vec<String> = value.graphemes(true).map(str::to_string).collect();
+    let len = graphemes.len();
     let mut cursor = renderer
         .input_cursors
         .get(&node_id)
         .copied()
-        .unwrap_or(chars.len())
-        .min(chars.len());
+        .unwrap_or(len)
+        .min(len);
     let mut anchor = renderer.input_anchors.get(&node_id).copied();
     let mut changed = false;
     let shift = key.modifiers.shift;
 
     if key.modifiers.ctrl && matches!(key.key, TuiKey::Char('a') | TuiKey::Char('A')) {
-        if !chars.is_empty() {
+        if !graphemes.is_empty() {
             renderer.input_anchors.insert(node_id, 0);
-            renderer.input_cursors.insert(node_id, chars.len());
+            renderer.input_cursors.insert(node_id, len);
         }
         return;
     }
@@ -43,44 +45,44 @@ pub(super) fn handle_input_key(
     match key.key {
         TuiKey::Char(ch) if !key.modifiers.ctrl && !key.modifiers.alt && !ch.is_control() => {
             if let Some((start, end)) = selection {
-                chars.drain(start..end);
+                graphemes.drain(start..end);
                 cursor = start;
             }
-            chars.insert(cursor, ch);
+            graphemes.insert(cursor, ch.to_string());
             cursor += 1;
             anchor = None;
             changed = true;
         }
         TuiKey::Enter if multiline && !key.modifiers.ctrl => {
             if let Some((start, end)) = selection {
-                chars.drain(start..end);
+                graphemes.drain(start..end);
                 cursor = start;
             }
-            chars.insert(cursor, '\n');
+            graphemes.insert(cursor, "\n".to_string());
             cursor += 1;
             anchor = None;
             changed = true;
         }
         TuiKey::Backspace => {
             if let Some((start, end)) = selection {
-                chars.drain(start..end);
+                graphemes.drain(start..end);
                 cursor = start;
                 anchor = None;
                 changed = true;
             } else if cursor > 0 {
-                chars.remove(cursor - 1);
+                graphemes.remove(cursor - 1);
                 cursor -= 1;
                 changed = true;
             }
         }
         TuiKey::Delete => {
             if let Some((start, end)) = selection {
-                chars.drain(start..end);
+                graphemes.drain(start..end);
                 cursor = start;
                 anchor = None;
                 changed = true;
-            } else if cursor < chars.len() {
-                chars.remove(cursor);
+            } else if cursor < graphemes.len() {
+                graphemes.remove(cursor);
                 changed = true;
             }
         }
@@ -89,12 +91,12 @@ pub(super) fn handle_input_key(
             cursor = move_caret(&mut anchor, shift, cursor, target);
         }
         TuiKey::Right => {
-            let target = (cursor + 1).min(chars.len());
+            let target = (cursor + 1).min(graphemes.len());
             cursor = move_caret(&mut anchor, shift, cursor, target);
         }
         TuiKey::Home => {
             let target = if multiline {
-                line_bounds(&chars, cursor).0
+                line_bounds(&graphemes, cursor).0
             } else {
                 0
             };
@@ -102,18 +104,18 @@ pub(super) fn handle_input_key(
         }
         TuiKey::End => {
             let target = if multiline {
-                line_bounds(&chars, cursor).1
+                line_bounds(&graphemes, cursor).1
             } else {
-                chars.len()
+                graphemes.len()
             };
             cursor = move_caret(&mut anchor, shift, cursor, target);
         }
         TuiKey::Up if multiline => {
-            let target = vertical_target(&chars, cursor, -1);
+            let target = vertical_target(&graphemes, cursor, -1);
             cursor = move_caret(&mut anchor, shift, cursor, target);
         }
         TuiKey::Down if multiline => {
-            let target = vertical_target(&chars, cursor, 1);
+            let target = vertical_target(&graphemes, cursor, 1);
             cursor = move_caret(&mut anchor, shift, cursor, target);
         }
         _ => {}
@@ -129,7 +131,7 @@ pub(super) fn handle_input_key(
         }
     }
     if changed {
-        let next: String = chars.into_iter().collect();
+        let next = graphemes.concat();
         dispatch_form(dom, &renderer.tree, node_id, "input", next);
     }
 }
@@ -144,45 +146,45 @@ fn move_caret(anchor: &mut Option<usize>, shift: bool, from: usize, to: usize) -
     }
 }
 
-fn line_bounds(chars: &[char], cursor: usize) -> (usize, usize) {
-    let start = chars[..cursor]
+fn line_bounds(graphemes: &[String], cursor: usize) -> (usize, usize) {
+    let start = graphemes[..cursor]
         .iter()
-        .rposition(|ch| *ch == '\n')
+        .rposition(|grapheme| grapheme == "\n")
         .map(|index| index + 1)
         .unwrap_or(0);
-    let end = chars[cursor..]
+    let end = graphemes[cursor..]
         .iter()
-        .position(|ch| *ch == '\n')
+        .position(|grapheme| grapheme == "\n")
         .map(|index| cursor + index)
-        .unwrap_or(chars.len());
+        .unwrap_or(graphemes.len());
     (start, end)
 }
 
 /// Move one visual line up or down, keeping the column where possible.
-fn vertical_target(chars: &[char], cursor: usize, delta: isize) -> usize {
-    let (start, end) = line_bounds(chars, cursor);
+fn vertical_target(graphemes: &[String], cursor: usize, delta: isize) -> usize {
+    let (start, end) = line_bounds(graphemes, cursor);
     let column = cursor - start;
     let (target_start, target_end) = if delta < 0 {
         if start == 0 {
             return cursor;
         }
         let previous_end = start - 1;
-        let previous_start = chars[..previous_end]
+        let previous_start = graphemes[..previous_end]
             .iter()
-            .rposition(|ch| *ch == '\n')
+            .rposition(|grapheme| grapheme == "\n")
             .map(|index| index + 1)
             .unwrap_or(0);
         (previous_start, previous_end)
     } else {
-        if end >= chars.len() {
+        if end >= graphemes.len() {
             return cursor;
         }
         let next_start = end + 1;
-        let next_end = chars[next_start..]
+        let next_end = graphemes[next_start..]
             .iter()
-            .position(|ch| *ch == '\n')
+            .position(|grapheme| grapheme == "\n")
             .map(|index| next_start + index)
-            .unwrap_or(chars.len());
+            .unwrap_or(graphemes.len());
         (next_start, next_end)
     };
     (target_start + column).min(target_end)

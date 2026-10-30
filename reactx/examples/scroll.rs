@@ -28,7 +28,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container
+            <Box
                 class="flex flex-col border border-blue-300 rounded p-1 gap-1 h-full"
                 title="Scroll containers"
             >
@@ -72,7 +72,7 @@ fn App() -> Element {
                     <Button on_click=move |_| offset.set(MAX_OFFSET)>Bottom</Button>
                     <span class="dim">{format!("clip: {}..{}", offset(), offset() + INNER_HEIGHT)}</span>
                 </div>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

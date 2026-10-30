@@ -4,6 +4,12 @@ pub enum BorderKind {
     Rounded,
     Double,
     Thick,
+    /// Single top/bottom edges with double sides.
+    SingleDouble,
+    /// Double top/bottom edges with single sides.
+    DoubleSingle,
+    /// ASCII `+`/`-`/`|` frame.
+    Classic,
     #[default]
     None,
 }
@@ -15,6 +21,9 @@ impl BorderKind {
             "rounded" | "round" => Self::Rounded,
             "double" => Self::Double,
             "thick" | "bold" => Self::Thick,
+            "single_double" | "single-double" | "singledouble" => Self::SingleDouble,
+            "double_single" | "double-single" | "doublesingle" => Self::DoubleSingle,
+            "classic" | "ascii" => Self::Classic,
             "none" | "false" | "0" | "" => Self::None,
             _ => return None,
         })
@@ -58,6 +67,38 @@ impl TextAlign {
             "left" | "start" => Self::Left,
             "center" | "middle" => Self::Center,
             "right" | "end" => Self::Right,
+            _ => return None,
+        })
+    }
+}
+
+/// How text that exceeds the available width is handled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TextWrap {
+    /// Soft-wrap at word boundaries (default).
+    #[default]
+    Wrap,
+    /// Fill each row to the full width, breaking words mid-way.
+    Hard,
+    /// Alias of [`TextWrap::TruncateEnd`], matching Ink's `truncate`.
+    Truncate,
+    /// Keep the tail, prefixing an ellipsis.
+    TruncateStart,
+    /// Keep both ends, with an ellipsis in the middle.
+    TruncateMiddle,
+    /// Keep the head, appending an ellipsis.
+    TruncateEnd,
+}
+
+impl TextWrap {
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(match s.trim().to_ascii_lowercase().as_str() {
+            "wrap" | "soft" => Self::Wrap,
+            "hard" | "break" => Self::Hard,
+            "truncate" | "clip" => Self::Truncate,
+            "truncate-start" | "truncate_start" => Self::TruncateStart,
+            "truncate-middle" | "truncate_middle" | "truncate-center" => Self::TruncateMiddle,
+            "truncate-end" | "truncate_end" | "ellipsis" => Self::TruncateEnd,
             _ => return None,
         })
     }

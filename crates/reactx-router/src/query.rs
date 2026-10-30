@@ -3,6 +3,8 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
+use percent_encoding::percent_decode_str;
+
 /// Parsed query string.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Query {
@@ -11,14 +13,9 @@ pub struct Query {
 
 impl Query {
     pub fn parse(input: &str) -> Self {
-        let mut params = BTreeMap::new();
-        for pair in input.split('&') {
-            if pair.is_empty() {
-                continue;
-            }
-            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
-            params.insert(decode_component(key), decode_component(value));
-        }
+        let params = form_urlencoded::parse(input.as_bytes())
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect();
         Self { params }
     }
 
@@ -66,30 +63,5 @@ fn normalize_path(path: &str) -> String {
 }
 
 pub(crate) fn decode_component(input: &str) -> String {
-    let mut out = Vec::with_capacity(input.len());
-    let mut bytes = input.bytes().peekable();
-    while let Some(byte) = bytes.next() {
-        match byte {
-            b'+' => out.push(b' '),
-            b'%' => {
-                let high = bytes.next().and_then(hex_value);
-                let low = bytes.next().and_then(hex_value);
-                match (high, low) {
-                    (Some(high), Some(low)) => out.push((high << 4) | low),
-                    _ => out.push(b'%'),
-                }
-            }
-            other => out.push(other),
-        }
-    }
-    String::from_utf8_lossy(&out).into_owned()
-}
-
-fn hex_value(byte: u8) -> Option<u8> {
-    match byte {
-        b'0'..=b'9' => Some(byte - b'0'),
-        b'a'..=b'f' => Some(byte - b'a' + 10),
-        b'A'..=b'F' => Some(byte - b'A' + 10),
-        _ => None,
-    }
+    percent_decode_str(input).decode_utf8_lossy().into_owned()
 }

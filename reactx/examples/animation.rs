@@ -106,14 +106,14 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col p-1 gap-1 h-full">
+            <Box class="flex flex-col p-1 gap-1 h-full">
                 <div class="flex flex-row gap-1 items-center">
                     <span class={format!("bold text-[{accent}]")}>ReactX Animation</span>
                     <span class="grow" />
                     <span class="dim">{format!("frame {f} · {seconds:.1}s")}</span>
                 </div>
-                <Container class="flex flex-row gap-1">
-                    <Container class="flex flex-col grow-[2]">
+                <Box class="flex flex-row gap-1">
+                    <Box class="flex flex-col grow-[2]">
                         <Animate
                             effect="sweep-in"
                             direction="up"
@@ -130,8 +130,8 @@ fn App() -> Element {
                                 border="single"
                             />
                         </Animate>
-                    </Container>
-                    <Container class="flex flex-col gap-1 grow">
+                    </Box>
+                    <Box class="flex flex-col gap-1 grow">
                         <Gauge value={progress} label={percent.clone()} border="rounded" title="Cycle" />
                         <Gauge
                             value={sprung}
@@ -167,10 +167,10 @@ fn App() -> Element {
                             <Button variant="ghost" on_click=move |_| replay += 1>Replay</Button>
                         </div>
                         <span class="dim">Ctrl+C to quit.</span>
-                    </Container>
-                </Container>
+                    </Box>
+                </Box>
                 <span class="dim">{marquee}</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

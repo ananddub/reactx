@@ -24,6 +24,10 @@ impl NodeTree {
         let Some(node) = self.nodes.get(&id) else {
             return;
         };
+        if let Some(text) = &node.text_override {
+            out.push_str(text);
+            return;
+        }
         if let Some(text) = &node.text {
             out.push_str(text);
         }

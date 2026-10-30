@@ -31,7 +31,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col p-1 gap-1 h-full">
+            <Box class="flex flex-col p-1 gap-1 h-full">
                 <div class="flex flex-row gap-1 items-center">
                     <span class="text-blue-300 bold">ReactX Dashboard</span>
                     <span class="grow" />
@@ -47,13 +47,13 @@ fn App() -> Element {
                     <Button variant="ghost" on_click=move |_| scroll.set((scroll() + 7) % 100)>Scroll</Button>
                 </div>
 
-                <Container class={format!("flex flex-row gap-1 h-[{top_height}]")}>
-                    <Container class="flex flex-col gap-1 w-[36]">
+                <Box class={format!("flex flex-row gap-1 h-[{top_height}]")}>
+                    <Box class="flex flex-col gap-1 w-[36]">
                         <Gauge value={progress()} label={label} border="rounded" title="Sync progress" />
                         <Gauge value={progress()} use_line=true />
                         <Sparkline data={samples()} color="#f9e2af" title="CPU history" border="single" />
-                    </Container>
-                    <Container class="flex flex-col gap-1 grow">
+                    </Box>
+                    <Box class="flex flex-col gap-1 grow">
                         <BarChart
                             data={vec![
                                 ("Rust".to_string(), 95u64),
@@ -74,12 +74,12 @@ fn App() -> Element {
                             selected_row={Some(selected())}
                             title="Processes"
                         />
-                    </Container>
+                    </Box>
                     <Scrollbar position={scroll()} content_length={100usize} orientation="vertical-right" />
-                </Container>
+                </Box>
 
-                <Container class="flex flex-row gap-1 items-start grow">
-                    <Container class="flex flex-col grow-[2] h-full">
+                <Box class="flex flex-row gap-1 items-start grow">
+                    <Box class="flex flex-col grow-[2] h-full">
                         <Chart
                             datasets={vec![latency, errors]}
                             x_bounds={(0.0, 12.0)}
@@ -88,8 +88,8 @@ fn App() -> Element {
                             title="Latency (ms)"
                             border="single"
                         />
-                    </Container>
-                    <Container class="flex flex-col grow h-full">
+                    </Box>
+                    <Box class="flex flex-col grow h-full">
                         <Canvas
                             x_bounds={(0.0, 80.0)}
                             y_bounds={(0.0, 20.0)}
@@ -97,7 +97,7 @@ fn App() -> Element {
                             title="Global nodes"
                             border="single"
                         />
-                    </Container>
+                    </Box>
                     <Calendar
                         year={year()}
                         month={month()}
@@ -108,10 +108,10 @@ fn App() -> Element {
                             month.set(next_month);
                         }
                     />
-                </Container>
+                </Box>
 
                 <span class="dim">{"Click a day, Tab through buttons, Ctrl+C to quit."}</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

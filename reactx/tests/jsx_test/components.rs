@@ -4,10 +4,10 @@ use reactx::prelude::*;
 fn counter_app() -> Element {
     let mut count = use_signal(|| 0);
     jsx! {
-        <Container border="rounded" border-color="#89b4fa" padding="1">
+        <Box border="rounded" border-color="#89b4fa" padding="1">
             <Text color="#a6e3a1" bold>JSX count: {count}</Text>
             <Button on_click=move |_| count += 1>Increment</Button>
-        </Container>
+        </Box>
     }
 }
 

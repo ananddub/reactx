@@ -19,7 +19,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container
+            <Box
                 class="flex flex-col border border-yellow-200 rounded p-1 gap-1 h-full"
                 title="Overlays"
             >
@@ -62,7 +62,7 @@ fn App() -> Element {
                         <Button variant="ghost" on_click=move |_| open.set(false)>Cancel</Button>
                     </div>
                 </Modal>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

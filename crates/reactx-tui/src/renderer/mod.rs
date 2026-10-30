@@ -87,22 +87,24 @@ impl TuiRenderer {
     }
 
     /// Recompute layout, rebuild the focus ring and draw one frame.
+    ///
+    /// The layout uses the frame's viewport, which is the whole screen for a
+    /// fullscreen terminal and the live region for an inline one.
     pub fn paint<T: Backend>(&mut self, terminal: &mut Terminal<T>) -> io::Result<()> {
-        let size = terminal.size()?;
-        self.area = Rect::new(0, 0, size.width, size.height);
-        self.recompute();
-
-        let tree = &self.tree;
-        let layout = &self.layout;
-        let clips = &self.clips;
-        let offsets = &self.offsets;
-        let cursors = &self.input_cursors;
-        let selections = self.selection_ranges();
-        let focus = &self.focus;
-        let cursor = self.cursor;
-        let focus_color = self.focus_color;
-        let effects = &mut self.effects;
         terminal.draw(|frame| {
+            self.area = frame.area();
+            self.recompute();
+
+            let tree = &self.tree;
+            let layout = &self.layout;
+            let clips = &self.clips;
+            let offsets = &self.offsets;
+            let cursors = &self.input_cursors;
+            let selections = self.selection_ranges();
+            let focus = &self.focus;
+            let cursor = self.cursor;
+            let focus_color = self.focus_color;
+            let effects = &mut self.effects;
             effects.begin_frame(frame);
             paint::render(
                 frame,
@@ -139,6 +141,7 @@ impl TuiRenderer {
         if self.focus.focused_id() != focused_before {
             self.rebuild_styles();
         }
+        self.tree.apply_transforms();
         let result = layout::compute_full(&self.tree, self.area);
         self.layout = result.rects;
         self.clips = result.clips;
@@ -167,23 +170,18 @@ impl TuiRenderer {
             &self.offsets,
             self.area,
         );
-        self.cursor = paint::cursor_position(
-            &self.tree,
-            &self.layout,
-            &self.clips,
-            &self.offsets,
-            &self.focus,
-            &self.input_cursors,
-        );
-    }
-
-    fn update_hit_rects(&mut self) {
-        self.hit_rects = self
-            .tree
-            .focusable_ids_in_paint_order()
-            .into_iter()
-            .filter_map(|id| self.node_visible_rect(id).map(|rect| (id, rect)))
-            .collect();
+        self.cursor = match crate::runtime::cursor::current() {
+            crate::runtime::cursor::CursorOverride::Auto => paint::cursor_position(
+                &self.tree,
+                &self.layout,
+                &self.clips,
+                &self.offsets,
+                &self.focus,
+                &self.input_cursors,
+            ),
+            crate::runtime::cursor::CursorOverride::Hidden => None,
+            crate::runtime::cursor::CursorOverride::At(x, y) => Some((x, y)),
+        };
     }
 
     pub fn focused_element(&self) -> Option<ElementId> {

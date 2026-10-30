@@ -6,7 +6,7 @@ use reactx::prelude::*;
 fn wrapped_app() -> Element {
     let mut trigger = use_signal(|| 0u64);
     rsx! {
-        Container { direction: "column", gap: Some(1),
+        Box { direction: "column", gap: Some(1),
             Animate {
                 effect: "dissolve",
                 duration: 90,

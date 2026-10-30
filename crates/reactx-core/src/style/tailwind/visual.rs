@@ -1,6 +1,6 @@
 //! Paint utilities: colours, borders and text modifiers.
 
-use crate::style::{BorderKind, Overflow, StyleProps, TextAlign};
+use crate::style::{BorderKind, Overflow, StyleProps, TextAlign, TextWrap};
 
 use super::value;
 
@@ -80,6 +80,7 @@ pub(super) fn apply(props: &mut StyleProps, token: &str) -> bool {
         }
         "truncate" => {
             props.overflow = Some(Overflow::Hidden);
+            props.text_wrap = Some(TextWrap::TruncateEnd);
             return true;
         }
         _ => {}

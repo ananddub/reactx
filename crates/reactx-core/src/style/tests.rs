@@ -106,3 +106,36 @@ fn parses_edges() {
         })
     );
 }
+
+#[test]
+fn parses_border_variants() {
+    let mut p = StyleProps::default();
+    for (name, kind) in [
+        ("single", BorderKind::Single),
+        ("rounded", BorderKind::Rounded),
+        ("double", BorderKind::Double),
+        ("thick", BorderKind::Thick),
+        ("singleDouble", BorderKind::SingleDouble),
+        ("double-single", BorderKind::DoubleSingle),
+        ("classic", BorderKind::Classic),
+        ("none", BorderKind::None),
+    ] {
+        p.apply_attr("border", name);
+        assert_eq!(p.border, Some(kind), "{name}");
+    }
+}
+
+#[test]
+fn parses_aspect_ratio_and_border_colors() {
+    let mut p = StyleProps::default();
+    p.apply_attr("aspect-ratio", "2");
+    p.apply_attr("border-top-color", "red");
+    p.apply_attr("border_left_color", "#102030");
+    p.apply_attr("border-dim", "true");
+    assert_eq!(p.aspect_ratio, Some(2.0));
+    assert!(p.border_top_color.is_some());
+    assert!(p.border_left_color.is_some());
+    assert!(p.border_dim);
+    p.clear_attr("border-dim");
+    assert!(!p.border_dim);
+}

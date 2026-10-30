@@ -10,13 +10,20 @@ readme = "../README.md"
 keywords = ["tui", "terminal", "dioxus", "ui", "framework"]
 categories = ["command-line-interface", "gui"]
 
+[features]
+default = ["async", "router"]
+# `use_fetch`, `use_websocket` and the network stack behind them.
+async = ["dep:reactx-async"]
+# `Router`, `routes!`, `Link`, `use_param`, `navigate`.
+router = ["dep:reactx-router"]
+
 [dependencies]
 dioxus.workspace = true
 reactx-core.workspace = true
 reactx-tui.workspace = true
 reactx-ui.workspace = true
-reactx-async.workspace = true
-reactx-router.workspace = true
+reactx-async = { workspace = true, optional = true }
+reactx-router = { workspace = true, optional = true }
 reactx-macro.workspace = true
 
 [dev-dependencies]

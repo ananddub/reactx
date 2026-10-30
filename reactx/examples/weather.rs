@@ -81,7 +81,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+            <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
                 <span class="bold">Weather</span>
                 <div class="flex flex-row gap-1">
                     {cities.iter().enumerate().map(|(index, city)| jsx! {
@@ -96,7 +96,7 @@ fn App() -> Element {
                     <WeatherView key="{name}" latitude={latitude} longitude={longitude} />
                 </Suspense>
                 <span class="dim">{"Data from open-meteo.com. Ctrl+C to quit."}</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

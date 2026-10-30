@@ -69,7 +69,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+            <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
                 <span class="bold">Todos</span>
                 <div class="flex flex-row gap-1">
                     <Input
@@ -119,7 +119,7 @@ fn App() -> Element {
                     })}
                 </List>
                 <span class="dim">Enter submits. Tab moves focus. Ctrl+C quits.</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

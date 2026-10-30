@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use crate::style::{ClassState, Display, StyleProps};
 
 mod mutations;
+mod transform;
 mod traversal;
 
 #[cfg(test)]
@@ -34,6 +35,9 @@ pub struct TuiNode {
     /// Attributes that do not come from `class`/`style`; kept so [`Self::attrs`]
     /// can be rebuilt when variant state or the terminal size changes.
     pub base_attrs: StyleProps,
+    /// Text produced by a surrounding `<Transform>`; overrides the collected
+    /// child text when present.
+    pub text_override: Option<String>,
     /// Raw `class="..."` list, if any.
     pub class: Option<String>,
     /// Raw `style="..."` declarations, if any.

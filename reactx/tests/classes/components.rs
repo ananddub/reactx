@@ -5,7 +5,7 @@ use reactx::TextAlign;
 fn widgets_app() -> Element {
     rsx! {
         ThemeProvider {
-            Container { class: "p-4", "Panel" }
+            Box { class: "p-4", "Panel" }
             Button { class: "text-center", on_click: move |_| {}, "Press" }
             Text { class: "bold", "Label" }
         }
@@ -32,7 +32,7 @@ fn widgets_forward_classes_to_their_elements() {
 fn precedence_app() -> Element {
     rsx! {
         ThemeProvider {
-            Container { padding: "1", class: "p-4", "Inline" }
+            Box { padding: "1", class: "p-4", "Inline" }
             Button { class: "bg-red-500", on_click: move |_| {}, "Tinted" }
         }
     }

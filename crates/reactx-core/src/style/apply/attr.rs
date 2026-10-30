@@ -35,7 +35,12 @@ impl StyleProps {
                     self.align_content = Some(v);
                 }
             }
-            "flex_wrap" | "wrap" => self.flex_wrap = FlexWrap::parse(value),
+            "flex_wrap" | "wrap" => {
+                self.flex_wrap = FlexWrap::parse(value);
+                if self.flex_wrap.is_none() {
+                    self.text_wrap = TextWrap::parse(value);
+                }
+            }
             "flex_basis" | "basis" => self.flex_basis = Dim::parse(value),
             "order" => {
                 if let Ok(v) = value.parse::<i32>() {
@@ -58,6 +63,12 @@ impl StyleProps {
             "min_height" => self.min_height = Dim::parse(value),
             "max_width" => self.max_width = Dim::parse(value),
             "max_height" => self.max_height = Dim::parse(value),
+            "aspect_ratio" => {
+                self.aspect_ratio = value
+                    .parse::<f32>()
+                    .ok()
+                    .filter(|ratio| ratio.is_finite() && *ratio > 0.0);
+            }
             "padding" => {
                 if let Some(v) = Edges::parse(value) {
                     self.padding = v;
@@ -113,15 +124,21 @@ impl StyleProps {
             "bg" | "background" | "background_color" => self.bg = TuiColor::parse(value),
             "border" => self.border = BorderKind::parse(value),
             "border_color" => self.border_color = TuiColor::parse(value),
+            "border_top_color" => self.border_top_color = TuiColor::parse(value),
+            "border_right_color" => self.border_right_color = TuiColor::parse(value),
+            "border_bottom_color" => self.border_bottom_color = TuiColor::parse(value),
+            "border_left_color" => self.border_left_color = TuiColor::parse(value),
+            "border_dim_color" | "border_dim" => self.border_dim = parse_bool(value),
             "title" => self.title = Some(text.to_string()),
             "title_align" => self.title_align = TitleAlign::parse(value),
             "text_align" | "align_text" => self.text_align = TextAlign::parse(value),
+            "text_wrap" | "text_overflow" | "wrap_text" => self.text_wrap = TextWrap::parse(value),
             "bold" => self.bold = parse_bool(value),
             "italic" => self.italic = parse_bool(value),
             "underline" | "underlined" => self.underline = parse_bool(value),
             "dim" | "dimmed" => self.dim = parse_bool(value),
             "strikethrough" | "crossed_out" => self.strikethrough = parse_bool(value),
-            "reversed" | "reverse" => self.reversed = parse_bool(value),
+            "reversed" | "reverse" | "inverse" => self.reversed = parse_bool(value),
             "focusable" => self.focusable = Some(parse_bool(value)),
             "disabled" => self.disabled = parse_bool(value),
             "value" | "input_value" => self.value = Some(text.to_string()),

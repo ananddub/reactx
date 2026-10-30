@@ -9,7 +9,7 @@ async work runs on [Tokio](https://tokio.rs).
 ```toml
 # Cargo.toml
 [dependencies]
-reactx = "0.1.0"      # { path = "reactx" } when developing inside this repo
+reactx = "0.1.1"      # { path = "reactx" } when developing inside this repo
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -20,14 +20,14 @@ fn Dashboard() -> Element {
     let mut count = use_signal(|| 0);
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+            <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
                 <span class="text-green-300 bold">Count: {count}</span>
                 <div class="flex flex-row gap-1">
                     <Button on_click=move |_| count += 1>+1</Button>
                     <Button variant="danger" on_click=move |_| count -= 1>-1</Button>
                 </div>
                 <span class="dim">Tab moves focus · Enter activates · Ctrl+C quits</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }
@@ -41,17 +41,40 @@ async fn main() {
 `launch` owns the terminal: it enters raw mode, enables mouse and focus
 reporting, renders at up to 60 fps while animations run, and restores the
 terminal on any exit (including `Ctrl+C`). `restore_terminal()` is exported for
-embedders that install their own panic hooks.
+embedders that install their own panic hooks. `launch_inline(app, height)` runs
+the app on the normal screen in the bottom `height` rows, so output above it
+(such as `<Static>` lines) stays in the terminal scrollback. `launch` installs
+a panic hook that restores the terminal, pushes Kitty keyboard-enhancement
+flags (key release and alternate keys, disambiguated Escape), and wraps every
+frame in a DEC 2026 synchronized update so the scrollback and live view update
+atomically.
 
 Everything in this README is available from `reactx::prelude::*`. Every
 example and snippet uses the HTML-like `jsx!`, which compiles to Dioxus
 elements at build time with the same components, hooks and renderer.
 
-> **Why `Container` instead of `Box`?** The macro expansion refers to
-> `Box<[Attribute]>` unqualified, so naming a component `Box` breaks the
-> surrounding `jsx!` invocation. The layout component is therefore called
-> `Container` (attributes `direction`, `justify`, `align`, `gap`, `padding`,
-> `border`, ... are unchanged).
+> **How is a component called `Box` possible?** It is written by hand — a
+> `BoxProps` struct plus a `Box` function — instead of with `#[component]`.
+> The function lives in the value namespace, so the `Box<[Attribute]>` the
+> macro expands to still resolves to `std::boxed::Box`.
+
+## Cargo features
+
+`async` and `router` are on by default. Turn them off for a smaller, faster
+build and enable only what the app uses:
+
+```toml
+[dependencies]
+reactx = { version = "0.1", default-features = false }
+```
+
+| Feature | Default | Enables |
+| --- | --- | --- |
+| `async` | yes | `use_fetch`, `use_websocket`, `SocketState`, the async `Suspense` re-export; pulls reqwest and tokio-tungstenite |
+| `router` | yes | `Router`, `routes!`, `Link`, `use_param`, `use_query`, `navigate`, `RouterContext`; pulls reactx-router |
+
+With both disabled the dependency tree loses reqwest, hyper, rustls and
+tungstenite entirely — roughly 200 unique packages instead of 290.
 
 ## JSX syntax
 
@@ -65,10 +88,10 @@ use reactx::prelude::*;
 fn App() -> Element {
     let mut count = use_signal(|| 0);
     jsx! {
-        <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+        <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
             <span class="text-green-300 bold">Count: {count}</span>
             <Button on_click=move |_| count += 1>+1</Button>
-        </Container>
+        </Box>
     }
 }
 ```
@@ -94,7 +117,7 @@ fn App() -> Element {
 | --- | --- |
 | `reactx-core` | `NodeTree`/`TuiNode` DOM, style props, colours, terminal events |
 | `reactx-tui` | Dioxus mutation bridge, Taffy layout, Ratatui painter, event loop |
-| `reactx-ui` | Themed widgets (`Container`, `Text`, `Button`, `Input`, `TextArea`, `Checkbox`, `Tabs`, `List`, `Modal`, `Animate`), data widgets (`Gauge`, `Table`, `BarChart`, `Sparkline`, `Chart`, `Canvas`, `Scrollbar`, `Calendar`) and `ThemeProvider`/`use_theme` |
+| `reactx-ui` | Themed widgets (`Box`, `Text`, `Newline`, `Spacer`, `Button`, `Input`, `TextArea`, `Checkbox`, `Tabs`, `List`, `Modal`, `Animate`), data widgets (`Gauge`, `Table`, `BarChart`, `Sparkline`, `Chart`, `Canvas`, `Scrollbar`, `Calendar`) and `ThemeProvider`/`use_theme` |
 | `reactx-async` | `use_fetch`, `use_websocket`, `<Suspense>` |
 | `reactx-router` | `Router`, `routes!`, `Link`, `use_location`/`use_param`/`use_query`, in-memory history |
 | `reactx-macro` | `jsx!`: compiles HTML-like tags into Dioxus elements with [rstml](https://github.com/rs-tml/rstml) |
@@ -107,13 +130,17 @@ Styles are ordinary attributes; the renderer maps them onto Taffy and Ratatui.
 
 - **Layout**: `direction` (`row`/`column`/`*-reverse`), `justify`, `align`,
   `align_self`, `align_content`, `flex_grow`, `flex_shrink`, `flex_wrap`,
-  `flex_basis`, `order`, `width`, `height`, `min_*`, `max_*`, `padding`,
-  `margin`, `gap`, `position`, `top`/`right`/`bottom`/`left`, `display`,
-  `overflow`, `scroll_x`, `scroll_y`. Dimensions accept cells (`"10"`),
-  percentages (`"50%"`) or `"auto"`.
-- **Visual**: `border` (`single`/`rounded`/`double`/`thick`), `border_color`,
-  `bg`, `color`, `title`, `title_align`, `text_align`, `layer` (`z_index`).
-- **Text**: `bold`, `italic`, `underline`, `strikethrough`, `dim`, `reversed`.
+  `flex_basis`, `order`, `width`, `height`, `min_*`, `max_*`, `aspect_ratio`,
+  `padding`, `margin`, `gap`, `position`, `top`/`right`/`bottom`/`left`,
+  `display`, `overflow`, `scroll_x`, `scroll_y`. Dimensions accept cells
+  (`"10"`), percentages (`"50%"`) or `"auto"`.
+- **Visual**: `border` (`single`/`rounded`/`double`/`thick`/`singleDouble`/
+  `doubleSingle`/`classic`), `border_color`, `border_top_color`,
+  `border_right_color`, `border_bottom_color`, `border_left_color`,
+  `border_dim`, `bg`, `color`, `title`, `title_align`, `text_align`, `layer`
+  (`z_index`).
+- **Text**: `bold`, `italic`, `underline`, `strikethrough`, `dim`, `reversed`
+  (`inverse`).
 - **Widget state**: `focusable`, `disabled`, `value`, `placeholder`, `label`,
   `checked`, `variant`.
 - **Overlays**: `focus_trap` restricts the focus ring and pointer events to a
@@ -133,11 +160,11 @@ then the inline `style` attribute.
 ```rust
 let tone = if done { "text-slate-500 line-through" } else { "text-slate-200" };
 jsx! {
-    <Container class="flex flex-row items-center gap-2 p-2 bg-slate-900 border border-slate-700 rounded">
+    <Box class="flex flex-row items-center gap-2 p-2 bg-slate-900 border border-slate-700 rounded">
         <span class={tone}>Ship it</span>
         <span class="grow" />
         <Button class="text-center hover:bg-slate-700" on_click=move |_| {}>Stop</Button>
-    </Container>
+    </Box>
 }
 ```
 
@@ -228,8 +255,11 @@ raw `div`/`span` nodes and with each other.
 | Component | Required props | Optional props |
 | --- | --- | --- |
 | `ThemeProvider` | — | `theme: Theme`, children |
-| `Container` | — | `direction`, `justify`, `align`, `gap: Option<u16>`, `padding: Option<String>`, `border: String`, `border_color: String`, `bg`, `color`, `width`, `height`, `flex_grow: Option<f32>`, `title: Option<String>`, `class`, children |
-| `Text` | — | `color`, `align`, `bold`, `italic`, `underline`, `strikethrough`, `dim`, `class`, children |
+| `Box` | — | `direction`, `justify`, `align`, `gap: Option<u16>`, `padding: Option<String>`, `border: String`, `border_color: String`, `border_top_color`/`border_right_color`/`border_bottom_color`/`border_left_color`, `border_dim`, `bg`, `color`, `width`, `height`, `aspect_ratio: Option<f32>`, `flex_grow: Option<f32>`, `title: Option<String>`, `aria_label`, `aria_hidden`, `class`, children |
+| `Text` | — | `color`, `bg`, `align`, `wrap` (`wrap`, `hard`, `truncate`, `truncate-start`, `truncate-middle`, `truncate-end`), `bold`, `italic`, `underline`, `strikethrough`, `dim`, `inverse`, `aria_label`, `aria_hidden`, `class`, children |
+| `Transform` | `transform: Callback<String, String>` | children; rewrites the text its children render |
+| `Newline` | — | `count: u16`; inserts line breaks into the surrounding text |
+| `Spacer` | — | — (grows to fill the parent's main axis) |
 | `Button` | `on_click: EventHandler<MouseEvent>` | `variant` (`primary` default, `success`, `danger`, `ghost`; emitted as overridable classes, no background), `disabled`, `class`, children |
 | `Checkbox` | `on_change: EventHandler<bool>` | `checked`, `label`, `class` |
 | `Input` | `on_input: EventHandler<String>` | `on_submit: Option<EventHandler<String>>`, `value`, `placeholder`, `label`, `disabled`, `class` |
@@ -239,12 +269,101 @@ raw `div`/`span` nodes and with each other.
 | `Tabs` | `tabs: Vec<String>`, `on_select: EventHandler<usize>` | `selected: usize`, `class` |
 | `Modal` | `open: bool` | `title`, `on_close: Option<EventHandler<()>>`, `class`, children |
 | `Animate` | — | `effect`, `duration`, `easing`, `direction`, `color`, `trigger: u64`, `exit`, `repeat`, `ping_pong`, `delay`, `index`, `step`, `class`, children |
+| `Static` | `items: Vec<Line<'static>>` | — |
 | `Link` | `to: String` | `class`, children |
 
 `Button`/`Checkbox`/`Input` handlers are required because they are controlled
 widgets: feed values back from the handler. `ListItem` rows become focusable
 when they have `on_click`. `Modal` renders nothing while `open` is false and
 should be the last child of the root so it paints above the page.
+
+### Text transforms
+
+`Transform` rewrites the text its children render, like Ink:
+
+```rust
+Transform {
+    transform: Callback::new(|text: String| text.to_uppercase()),
+    "hello"
+}
+```
+
+Only the text changes: styles, padding and dimensions stay as laid out, the
+callback receives plain text (no ANSI sequences), and nested transforms
+compose.
+
+### Screen readers
+
+`aria_label` replaces a component's children with the label for assistive
+output, and `aria_hidden` removes the component. Enable the mode with
+`LaunchOptions { screen_reader: Some(true), .. }`, or set
+`REACTX_SCREEN_READER=true` / `INK_SCREEN_READER=true`.
+`use_is_screen_reader_enabled()` reads the flag inside components.
+
+## Static output
+
+`<Static>` writes finished lines into the terminal scrollback once, above the
+live view. Pair it with `launch_inline`, which only owns the bottom `height`
+rows of the screen:
+
+```rust
+fn App() -> Element {
+    let ticks = use_ticker(Duration::from_millis(700));
+    let tick = ticks();
+    let items: Vec<Line<'static>> = (1..=tick)
+        .map(|n| Line::from(format!("log line {n}")))
+        .collect();
+
+    jsx! {
+        <Static items={items} />
+        <Box class="border rounded p-1">{"live view"}</Box>
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    launch_inline(App, 6).await;
+}
+```
+
+`Static` only emits items past the previous length, so keep the list
+append-only. Fullscreen `launch` has no scrollback region to target and drops
+queued lines; use `launch_inline` for logs. This is the same mechanism Ink
+uses: Ratatui's `Viewport::Inline` plus `Terminal::insert_before`, so the
+terminal itself keeps the history. `Line` and `Span` are in the prelude.
+
+## Headless rendering
+
+`render_to_string(app, width, height)` renders a single frame through a Ratatui
+`TestBackend` and returns the screen text, with trailing spaces and blank lines
+trimmed — handy for snapshots, logs and assertions:
+
+```rust
+let screen = render_to_string(App, 60, 16);
+assert!(screen.contains("Count: 0"));
+```
+
+## Rendering options
+
+`launch_with(app, options)` and `launch_inline_with(app, height, options)`
+accept `LaunchOptions`:
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `exit_on_ctrl_c: bool` | `true` | whether `Ctrl+C` quits; when false your `use_input` handler sees it |
+| `kitty_keyboard: bool` | `true` | push the kitty keyboard protocol |
+| `screen_reader: Option<bool>` | env-detected | aria output mode |
+| `max_fps: Option<f64>` | `Some(30.0)` | frame cap; `None` paints on every change |
+| `interactive: Option<bool>` | `stdout().is_terminal()` | when false the app renders headlessly and prints the final frame |
+| `on_render: Option<RenderCallback>` | `None` | called after each frame with `RenderMetrics { render_time, frame_time }` |
+
+The `AppHandle` from `use_app()` offers the Ink `Instance` actions: `exit()`,
+`unmount()`, `cleanup()`, `clear()`, plus the async
+`wait_until_render_flush()` and `wait_until_exit()`.
+
+Without a TTY (CI, piped output) the loop paints into a `TestBackend` sized by
+`$COLUMNS`/`$LINES` (80×24 by default) and writes the final frame to stdout on
+exit; end such a run from inside the app with `use_app().exit()`.
 
 ## Data widgets
 
@@ -564,7 +683,7 @@ Tailwind-style API:
 
 ```rust
 jsx! {
-    <Container class="animate-fade duration-300 ease-quad-out">...</Container>
+    <Box class="animate-fade duration-300 ease-quad-out">...</Box>
     <Animate class="animate-dissolve animate-exit-slide-out animate-repeat-2">...</Animate>
     <span class="animate-slide-in animate-direction-up animate-color-red-500">...</span>
     <span class="animate-pulse duration-800">...</span> // loops forever
@@ -626,6 +745,8 @@ hook subscribes the calling component only to the state it reads.
 | Hook | Returns | Purpose |
 | --- | --- | --- |
 | `use_terminal_size()` | `(u16, u16)` | current width/height in cells; rerenders on resize |
+| `use_window_size()` | `(u16, u16)` | Ink-style alias for `use_terminal_size()` |
+| `use_app()` | `AppHandle` | `use_app().exit()` stops the loop and restores the terminal |
 | `use_terminal_focus()` | `bool` | whether the OS terminal has focus; rerenders on focus changes |
 | `use_animation_frame()` | `Signal<u64>` | ~30 fps ticker; reading it rerenders every frame |
 | `use_ticker(Duration)` | `Signal<u64>` | the same ticker at a custom cadence |
@@ -639,12 +760,48 @@ hook subscribes the calling component only to the state it reads.
 | `use_location()` | `String` | the current path |
 | `use_router()` | `RouterContext` | navigation + history |
 | `use_theme()` | `Theme` | the nearest `ThemeProvider` theme or Mocha |
+| `use_input(handler)` | — | global key handler `(input, TuiKeyEvent)`, runs before focused widgets |
+| `use_input_when(active, handler)` | — | `use_input` with an active switch |
+| `use_paste(handler)` | — | bracketed-paste handler |
+| `use_paste_when(active, handler)` | — | `use_paste` with an active switch |
+| `use_focus(id)` | `bool` | whether element `id` is focused; also joins it to the focus ring |
+| `use_focus_manager()` | `FocusManagerHandle` | `focus_next`, `focus_previous`, `focus`, `blur`, `enable_focus`, `disable_focus`, `active_id` |
+| `use_cursor()` | `CursorHandle` | `set(x, y)`, `hide()`, `reset()` |
+| `use_box_metrics(id)` | `BoxMetrics` | `width`, `height`, `left`, `top`, `client_width`, `client_height`; rerenders on layout |
+| `measure_element(id)` | `Option<BoxMetrics>` | non-subscribing lookup, safe outside render |
+| `use_stdin()` | `StdinHandle` | `is_raw_mode_supported()`, `is_raw_mode()`, `set_raw_mode(bool)` |
+| `use_stdout()` | `StdoutHandle` | `write(text)` appends above the live view |
+| `use_stderr()` | `StderrHandle` | `write(text)` flushes after the terminal is restored |
+| `use_is_screen_reader_enabled()` | `bool` | whether screen-reader mode is active |
 
 `Tween` accepts milliseconds (`300u32`) or a `Duration`, and
 `.ease(Interpolation::CubicOut)` selects the curve. `Spring` offers
 `Spring::default()`, `Spring::bouncy()`, `Spring::stiff()` and
 `Spring::new(stiffness, damping)`; `.mass()` adjusts the weight. The value
 hooks stop requesting frames once they settle, so idle UI is cheap.
+
+Global key handlers and focus work together:
+
+```rust
+#[component]
+fn Search() -> Element {
+    let mut query = use_signal(String::new);
+    let focused = use_focus("search");
+    let focus = use_focus_manager();
+
+    use_input(move |input, key| match key.key {
+        TuiKey::Escape => focus.blur(),
+        TuiKey::Char(_) => query.write().push_str(&input),
+        _ => {}
+    });
+
+    let border = if focused { "border-green-300" } else { "border-gray-600" };
+    jsx! { <span id="search" class={border}>{query}</span> }
+}
+```
+
+`use_focus("search")` also puts the element in the focus ring even without a
+`focusable` attribute, so Tab and `focus_next()` reach it.
 
 ## Async data
 
@@ -731,6 +888,7 @@ cargo run -p reactx --example websocket    # needs network
 cargo run -p reactx --example dashboard    # all data widgets, adapts to terminal height
 cargo run -p reactx --example tailwind     # Tailwind-style classes, animation, hover/focus/breakpoints
 cargo run -p reactx --example animation    # tweens, springs, <Animate> and screen effects
+cargo run -p reactx --example static_log   # <Static> scrollback above an inline viewport
 ```
 
 All examples are written with `jsx!` and styled with Tailwind-style utility
@@ -749,6 +907,7 @@ classes. Each example stays under 200 lines and focuses on one feature.
 | `dashboard` | every data widget, adaptive to terminal height |
 | `tailwind` | breakpoints, hover/focus/disabled variants, computed classes |
 | `animation` | ticker, tweens/springs, `<Animate>`, screen effects |
+| `static_log` | append-only `<Static>` output above an inline viewport |
 
 ## Testing
 
@@ -779,7 +938,8 @@ cargo build -p reactx --examples
   router navigation and the `<Animate>` wrapper headlessly.
 - `reactx/tests/framework.rs` covers scroll containers and clipping, caret
   editing and paste, selection/copy/cut, multi-line `TextArea` editing,
-  `onchange` on blur, mouse buttons/hover/drag, terminal resizing, and modal
+  `onchange` on blur, mouse buttons/hover/drag, terminal resizing, text
+  truncation via `render_to_string`, `Newline`/`Spacer` flow, and modal
   focus traps, backdrop blocking and layers.
 - `reactx/tests/charts.rs` renders every data widget through `TestBackend`,
   checks the `Canvas` marker grids, and drives calendar selection/month
@@ -843,8 +1003,6 @@ cargo build -p reactx --examples
 
 ## Known limitations
 
-- Components cannot be named `Box` (macro hygiene: the expansion refers to
-  `Box<[Attribute]>`), hence `Container`.
 - rstml drops whitespace-only text, so `{a} {b}` renders as `ab`; write the
   space inside adjacent text or a quoted `"..."` child. Apostrophes and
   non-ASCII punctuation (`…`, `—`) in unquoted JSX text are rejected by the Rust
@@ -859,6 +1017,16 @@ cargo build -p reactx --examples
 - Clipboard writes go through OSC 52 only; terminals that ignore it (or tmux
   without `set-clipboard on`) will not see the copied text.
 - The router keeps history in memory only; there is no OS/browser integration.
+- `Transform` rewrites text only. It cannot change colours, borders or layout,
+  and ANSI escape sequences in its output are printed literally.
+- Ink's stream-override `RenderOptions` (`stdin`/`stdout`/`stderr`), `debug`,
+  `patchConsole` and `incrementalRendering` have no equivalent: ReactX always
+  uses the process streams, and Ratatui's diffed buffer already updates
+  incrementally. There is also no host-level `rerender`; signal writes drive
+  renders instead.
+- Screen-reader mode is opt-in through `LaunchOptions::screen_reader` or
+  `REACTX_SCREEN_READER=true` and understands only `aria_label` and
+  `aria_hidden`, not the full Ink `aria-*` vocabulary.
 
 ## License
 

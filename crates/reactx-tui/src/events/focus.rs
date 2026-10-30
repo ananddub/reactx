@@ -1,12 +1,13 @@
 //! Focus transitions and blur/change events.
 
 use dioxus_core::VirtualDom;
+use unicode_segmentation::UnicodeSegmentation;
 
 use super::dispatch::{dispatch_focus, dispatch_form};
 use crate::focus::FocusChange;
 use crate::TuiRenderer;
 
-pub(super) fn apply_focus(dom: &VirtualDom, renderer: &mut TuiRenderer, change: FocusChange) {
+pub(crate) fn apply_focus(dom: &VirtualDom, renderer: &mut TuiRenderer, change: FocusChange) {
     if !change.is_change() {
         return;
     }
@@ -41,7 +42,7 @@ pub(super) fn apply_focus(dom: &VirtualDom, renderer: &mut TuiRenderer, change: 
                 renderer
                     .input_cursors
                     .entry(current)
-                    .or_insert(value.chars().count());
+                    .or_insert(value.graphemes(true).count());
                 renderer.focus_baseline = Some((current, value));
             }
         }

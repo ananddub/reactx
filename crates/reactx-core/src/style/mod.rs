@@ -13,7 +13,7 @@ mod tailwind;
 mod tests;
 
 pub use kinds_layout::{Align, Display, FlexDir, FlexWrap, Justify, Overflow, Position};
-pub use kinds_visual::{BorderKind, Dim, Edges, TextAlign, TitleAlign};
+pub use kinds_visual::{BorderKind, Dim, Edges, TextAlign, TextWrap, TitleAlign};
 pub use parse::{parse_bool, parse_cells};
 pub use tailwind::ClassState;
 
@@ -41,6 +41,8 @@ pub struct StyleProps {
     pub min_height: Option<Dim>,
     pub max_width: Option<Dim>,
     pub max_height: Option<Dim>,
+    /// Preferred width-to-height ratio.
+    pub aspect_ratio: Option<f32>,
     pub padding: Edges,
     pub margin: Edges,
     /// (row gap, column gap)
@@ -67,9 +69,18 @@ pub struct StyleProps {
     pub bg: Option<TuiColor>,
     pub border: Option<BorderKind>,
     pub border_color: Option<TuiColor>,
+    /// Per-side overrides for [`Self::border_color`].
+    pub border_top_color: Option<TuiColor>,
+    pub border_right_color: Option<TuiColor>,
+    pub border_bottom_color: Option<TuiColor>,
+    pub border_left_color: Option<TuiColor>,
+    /// Draw the border with the dim modifier.
+    pub border_dim: bool,
     pub title: Option<String>,
     pub title_align: Option<TitleAlign>,
     pub text_align: Option<TextAlign>,
+    /// How overflowing text is wrapped or truncated.
+    pub text_wrap: Option<TextWrap>,
 
     // Text modifiers
     pub bold: bool,

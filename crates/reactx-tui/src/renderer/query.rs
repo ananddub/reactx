@@ -2,11 +2,22 @@
 
 use ratatui::layout::Rect;
 use reactx_core::NodeId;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::layout;
 use crate::renderer::TuiRenderer;
 
 impl TuiRenderer {
+    /// Refresh the hit-test cache from the latest layout pass.
+    pub(super) fn update_hit_rects(&mut self) {
+        self.hit_rects = self
+            .tree
+            .focusable_ids_in_paint_order()
+            .into_iter()
+            .filter_map(|id| self.node_visible_rect(id).map(|rect| (id, rect)))
+            .collect();
+    }
+
     /// The visible cell rectangle of a node after scroll offsets and clipping.
     pub fn node_visible_rect(&self, id: NodeId) -> Option<Rect> {
         let rect = *self.layout.get(&id)?;
@@ -41,7 +52,7 @@ impl TuiRenderer {
         self.input_anchors.get(&id).copied()
     }
 
-    /// The active selection of a text input as a half-open char range.
+    /// The active selection of a text input as a half-open grapheme range.
     pub fn selection(&self, id: NodeId) -> Option<(usize, usize)> {
         let node = self.tree.get(id)?;
         let len = node
@@ -49,7 +60,7 @@ impl TuiRenderer {
             .value
             .as_deref()
             .unwrap_or_default()
-            .chars()
+            .graphemes(true)
             .count();
         let anchor = (*self.input_anchors.get(&id)?).min(len);
         let cursor = self.input_cursors.get(&id).copied().unwrap_or(len).min(len);

@@ -3,8 +3,9 @@
 use ratatui::layout::Rect;
 use reactx_core::{NodeId, NodeTree};
 use rustc_hash::FxHashMap;
+use unicode_segmentation::UnicodeSegmentation;
 
-use super::cells::{cell_visible, char_prefix_width};
+use super::cells::{cell_visible, prefix_width};
 use super::layout;
 use super::textarea::caret_line_col;
 use crate::focus::FocusManager;
@@ -32,11 +33,8 @@ pub fn cursor_position(
         return None;
     }
     let value = node.attrs.value.clone().unwrap_or_default();
-    let cursor = cursors
-        .get(&id)
-        .copied()
-        .unwrap_or_else(|| value.chars().count())
-        .min(value.chars().count());
+    let len = value.graphemes(true).count();
+    let cursor = cursors.get(&id).copied().unwrap_or(len).min(len);
 
     let (x, y) = if layout::is_textarea(node) {
         let (row, column) = caret_line_col(&value, cursor);
@@ -52,7 +50,7 @@ pub fn cursor_position(
         let cursor_col = if value.is_empty() {
             0
         } else {
-            char_prefix_width(&value, cursor)
+            prefix_width(&value, cursor)
         };
         let offset = if value.is_empty() {
             0

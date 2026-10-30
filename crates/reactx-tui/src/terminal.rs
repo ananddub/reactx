@@ -19,6 +19,11 @@ pub fn use_terminal_size() -> (u16, u16) {
     TERMINAL_SIZE()
 }
 
+/// Ink-style alias for [`use_terminal_size`].
+pub fn use_window_size() -> (u16, u16) {
+    use_terminal_size()
+}
+
 /// Read whether the terminal has focus. Calling this inside a component
 /// rerenders it when the terminal gains or loses OS focus.
 pub fn use_terminal_focus() -> bool {

@@ -10,10 +10,50 @@ use std::time::{Duration, Instant};
 use crossterm::event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers};
 use dioxus::prelude::*;
 use futures_util::{Stream, StreamExt};
+use ratatui::backend::TestBackend;
+use ratatui::buffer::Buffer;
+use ratatui::text::Line;
+use ratatui::{Terminal, TerminalOptions, Viewport};
+use reactx_core::static_out;
 use tokio::time::timeout;
 
-use super::handle_batch;
+use super::run::flush_static;
+use super::{handle_batch, Mode};
 use crate::TuiRenderer;
+
+fn buffer_text(buffer: &Buffer) -> String {
+    buffer
+        .content
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect::<String>()
+}
+
+#[test]
+fn static_lines_follow_the_viewport_mode() {
+    let _ = static_out::take_lines();
+
+    // Inline mode writes queued lines above the live view.
+    static_out::append_lines([Line::from("alpha"), Line::from("beta")]);
+    let backend = TestBackend::new(20, 10);
+    let options = TerminalOptions {
+        viewport: Viewport::Inline(3),
+    };
+    let mut terminal = Terminal::with_options(backend, options).unwrap();
+    flush_static(&mut terminal, Mode::Inline(3)).unwrap();
+    assert!(static_out::take_lines().is_empty());
+    let text = buffer_text(terminal.backend().buffer());
+    assert!(text.contains("alpha"), "{text:?}");
+    assert!(text.contains("beta"), "{text:?}");
+
+    // Fullscreen has nowhere to scroll back to, so lines are dropped.
+    static_out::append_lines([Line::from("gone")]);
+    let mut fullscreen = Terminal::new(TestBackend::new(20, 10)).unwrap();
+    flush_static(&mut fullscreen, Mode::Fullscreen).unwrap();
+    assert!(static_out::take_lines().is_empty());
+    let text = buffer_text(fullscreen.backend().buffer());
+    assert!(!text.contains("gone"), "{text:?}");
+}
 
 fn app() -> Element {
     rsx! {

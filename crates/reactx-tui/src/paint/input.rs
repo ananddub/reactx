@@ -4,9 +4,10 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use reactx_core::TuiNode;
-use unicode_width::UnicodeWidthChar;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
-use super::cells::{cell_visible, char_prefix_width, put_line, skip_columns};
+use super::cells::{cell_visible, prefix_width, put_line, skip_columns};
 use super::Context;
 
 #[allow(clippy::too_many_arguments)]
@@ -38,14 +39,14 @@ pub(super) fn paint_input(
             .value
             .as_deref()
             .unwrap_or_default()
-            .chars()
+            .graphemes(true)
             .count()
     });
-    let cursor_chars = cursor.min(value.chars().count());
+    let cursor_index = cursor.min(value.graphemes(true).count());
     let cursor_col = if empty {
         0
     } else {
-        char_prefix_width(&value, cursor_chars)
+        prefix_width(&value, cursor_index)
     };
     let offset = if focused && !empty {
         cursor_col.saturating_sub(area.width.saturating_sub(1))
@@ -73,8 +74,8 @@ pub(super) fn paint_input(
     if !empty {
         if let Some((start, end)) = ctx.selections.get(&id).copied() {
             let mut column = 0u16;
-            for (index, ch) in value.chars().enumerate() {
-                let width = UnicodeWidthChar::width(ch).unwrap_or(0) as u16;
+            for (index, grapheme) in value.graphemes(true).enumerate() {
+                let width = UnicodeWidthStr::width(grapheme) as u16;
                 if index >= start && index < end && column >= offset {
                     let x = origin_x + column.saturating_sub(offset) as i32;
                     if cell_visible(x, origin_y, clip) {

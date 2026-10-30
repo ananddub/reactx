@@ -55,7 +55,7 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container
+            <Box
                 class="flex flex-col border border-green-300 rounded p-1 gap-1 h-full"
                 title="Text editing"
             >
@@ -136,7 +136,7 @@ fn App() -> Element {
                 <span class="dim">
                     {"Enter saves · click a draft to reopen it · wheel scrolls the list · Ctrl+C quits"}
                 </span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

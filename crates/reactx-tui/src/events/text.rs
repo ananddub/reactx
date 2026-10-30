@@ -6,6 +6,7 @@ use std::rc::Rc;
 use dioxus_core::VirtualDom;
 use dioxus_html::{HasClipboardData, PlatformEventData};
 use reactx_core::{NodeId, NodeTree};
+use unicode_segmentation::UnicodeSegmentation;
 
 use super::dispatch::{dispatch_chain_default, dispatch_form};
 use crate::TuiRenderer;
@@ -53,7 +54,13 @@ fn selected_text(renderer: &TuiRenderer, id: NodeId) -> Option<String> {
         .value
         .clone()
         .unwrap_or_default();
-    Some(value.chars().skip(start).take(end - start).collect())
+    Some(
+        value
+            .graphemes(true)
+            .skip(start)
+            .take(end - start)
+            .collect(),
+    )
 }
 
 /// Copy the focused selection after `oncopy` runs. Returns false when Ctrl+C
@@ -106,9 +113,9 @@ pub(super) fn cut_selection(dom: &VirtualDom, renderer: &mut TuiRenderer) {
         .get(id)
         .and_then(|node| node.attrs.value.clone())
         .unwrap_or_default();
-    let mut chars: Vec<char> = value.chars().collect();
-    chars.drain(start..end);
-    let next: String = chars.into_iter().collect();
+    let mut graphemes: Vec<String> = value.graphemes(true).map(str::to_string).collect();
+    graphemes.drain(start..end);
+    let next = graphemes.concat();
     renderer.input_cursors.insert(id, start);
     renderer.input_anchors.remove(&id);
     dispatch_form(dom, &renderer.tree, id, "input", next);
@@ -133,33 +140,35 @@ pub(super) fn paste(dom: &VirtualDom, renderer: &mut TuiRenderer, text: &str) {
     {
         return;
     }
-    let mut chars: Vec<char> = node
+    let mut graphemes: Vec<String> = node
         .attrs
         .value
         .clone()
         .unwrap_or_default()
-        .chars()
+        .graphemes(true)
+        .map(str::to_string)
         .collect();
     let mut cursor = renderer
         .input_cursors
         .get(&node_id)
         .copied()
-        .unwrap_or(chars.len())
-        .min(chars.len());
+        .unwrap_or(graphemes.len())
+        .min(graphemes.len());
     if let Some((start, end)) = renderer.selection(node_id) {
-        chars.drain(start..end);
+        graphemes.drain(start..end);
         cursor = start;
     }
-    let pasted: Vec<char> = text
+    let filtered: String = text
         .chars()
         .filter(|ch| (*ch == '\n' && multiline) || (!ch.is_control() && *ch != '\r'))
         .collect();
-    for ch in pasted.iter().rev() {
-        chars.insert(cursor, *ch);
+    let pasted: Vec<&str> = filtered.graphemes(true).collect();
+    for grapheme in pasted.iter().rev() {
+        graphemes.insert(cursor, grapheme.to_string());
     }
     cursor += pasted.len();
     renderer.input_cursors.insert(node_id, cursor);
     renderer.input_anchors.remove(&node_id);
-    let next: String = chars.into_iter().collect();
+    let next = graphemes.concat();
     dispatch_form(dom, &renderer.tree, node_id, "input", next);
 }

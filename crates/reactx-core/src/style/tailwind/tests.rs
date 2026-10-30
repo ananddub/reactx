@@ -3,7 +3,7 @@
 use crate::color::TuiColor;
 use crate::style::{
     Align, BorderKind, ClassState, Dim, Display, FlexDir, FlexWrap, Justify, Overflow, Position,
-    StyleProps, TextAlign,
+    StyleProps, TextAlign, TextWrap,
 };
 
 fn styled(classes: &str) -> StyleProps {
@@ -50,6 +50,7 @@ fn display_and_position() {
     assert_eq!(styled("hidden").display, Some(Display::None));
     assert_eq!(styled("absolute").position, Some(Position::Absolute));
     assert_eq!(styled("truncate").overflow, Some(Overflow::Hidden));
+    assert_eq!(styled("truncate").text_wrap, Some(TextWrap::TruncateEnd));
 }
 
 #[test]

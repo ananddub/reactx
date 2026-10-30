@@ -5,7 +5,7 @@ fn counter_app() -> Element {
     let mut count = use_signal(|| 0);
     rsx! {
         ThemeProvider {
-            Container { border: "rounded", padding: "1", gap: Some(1),
+            Box { border: "rounded", padding: "1", gap: Some(1),
                 Text { "Count: {count}" }
                 Button { on_click: move |_| count += 1, "Increment" }
             }

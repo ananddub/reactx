@@ -46,11 +46,11 @@ fn App() -> Element {
 
     jsx! {
         <ThemeProvider>
-            <Container class="flex flex-col border border-blue-300 rounded p-1 gap-1">
+            <Box class="flex flex-col border border-blue-300 rounded p-1 gap-1">
                 <span class="bold">BTC/USDT live trades</span>
                 {stream}
                 <span class="dim">Feed: Binance. Ctrl+C to quit.</span>
-            </Container>
+            </Box>
         </ThemeProvider>
     }
 }

@@ -8,7 +8,7 @@ use unicode_width::UnicodeWidthStr;
 
 use super::leaf::{leaf_for, Leaf};
 use super::style::taffy_style;
-use super::text::wrap;
+use super::wrap::wrap_mode;
 
 pub(super) fn build(
     taffy: &mut TaffyTree<Leaf>,
@@ -55,12 +55,11 @@ pub(super) fn build(
 }
 
 pub(super) fn measure_leaf(
-    text: &str,
-    wrap_lines: bool,
+    leaf: &Leaf,
     known: Size<Option<f32>>,
     available: Size<AvailableSpace>,
 ) -> Size<f32> {
-    let width_limit = if wrap_lines {
+    let width_limit = if leaf.wrap {
         known.width.or(match available.width {
             AvailableSpace::Definite(width) if width.is_finite() && width > 0.0 => Some(width),
             _ => None,
@@ -68,7 +67,11 @@ pub(super) fn measure_leaf(
     } else {
         None
     };
-    let lines = wrap(text, width_limit.map(|width| width.max(1.0) as usize));
+    let lines = wrap_mode(
+        &leaf.text,
+        width_limit.map(|width| width.max(1.0) as usize),
+        leaf.mode,
+    );
     let width = lines
         .iter()
         .map(|line| UnicodeWidthStr::width(line.as_str()))

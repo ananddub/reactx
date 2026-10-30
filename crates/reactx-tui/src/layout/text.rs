@@ -1,7 +1,8 @@
 //! Widget kinds, labels and text wrapping.
 
 use reactx_core::{NodeTree, TuiNode};
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+use textwrap::Options;
+use unicode_width::UnicodeWidthStr;
 
 /// The widget a node behaves as. `variant` lets a plain element opt into a
 /// widget rendering (for example `span` with `variant:checkbox` or a `div`
@@ -26,10 +27,10 @@ pub(crate) fn checkbox_text(node: &TuiNode, fallback: &str) -> String {
 
 /// Split text into display lines that fit `max_width` cells. `None` disables wrapping.
 pub fn wrap(text: &str, max_width: Option<usize>) -> Vec<String> {
-    let width = match max_width {
-        Some(width) => width.max(1),
-        None => usize::MAX,
+    let Some(width) = max_width else {
+        return text.split('\n').map(str::to_string).collect();
     };
+    let width = width.max(1);
 
     let mut lines = Vec::new();
     for paragraph in text.split('\n') {
@@ -37,56 +38,18 @@ pub fn wrap(text: &str, max_width: Option<usize>) -> Vec<String> {
             lines.push(String::new());
             continue;
         }
-
-        let mut line = String::new();
-        let mut line_width = 0usize;
-
-        for word in paragraph.split(' ').filter(|word| !word.is_empty()) {
-            let word_width = UnicodeWidthStr::width(word);
-            if line_width > 0 && line_width + 1 + word_width <= width {
-                line.push(' ');
-                line.push_str(word);
-                line_width += 1 + word_width;
-                continue;
-            }
-            if line_width > 0 {
-                lines.push(std::mem::take(&mut line));
-                line_width = 0;
-            }
-            push_long_word(&mut lines, &mut line, &mut line_width, word, width);
-        }
-
-        lines.push(line);
+        let options = Options::new(width).break_words(true);
+        lines.extend(
+            textwrap::wrap(paragraph, options)
+                .into_iter()
+                .map(|line| line.into_owned()),
+        );
     }
 
     if lines.is_empty() {
         lines.push(String::new());
     }
     lines
-}
-
-fn push_long_word(
-    lines: &mut Vec<String>,
-    line: &mut String,
-    line_width: &mut usize,
-    word: &str,
-    width: usize,
-) {
-    if UnicodeWidthStr::width(word) <= width {
-        line.push_str(word);
-        *line_width = UnicodeWidthStr::width(word);
-        return;
-    }
-
-    for ch in word.chars() {
-        let ch_width = UnicodeWidthChar::width(ch).unwrap_or(0);
-        if *line_width > 0 && *line_width + ch_width > width {
-            lines.push(std::mem::take(line));
-            *line_width = 0;
-        }
-        line.push(ch);
-        *line_width += ch_width;
-    }
 }
 
 /// Display width of a string in terminal cells.
@@ -106,5 +69,27 @@ pub fn node_label(tree: &NodeTree, node: &TuiNode) -> String {
             .clone()
             .unwrap_or_else(|| node.attrs.placeholder.clone().unwrap_or_default()),
         _ => node.text.clone().unwrap_or_default(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wrap;
+
+    #[test]
+    fn wraps_words_and_long_tokens() {
+        assert_eq!(wrap("hello world", Some(5)), vec!["hello", "world"]);
+        assert_eq!(wrap("abcdefgh", Some(3)), vec!["abc", "def", "gh"]);
+    }
+
+    #[test]
+    fn wraps_wide_text() {
+        assert_eq!(wrap("你好世界", Some(4)), vec!["你好", "世界"]);
+    }
+
+    #[test]
+    fn none_disables_wrapping() {
+        assert_eq!(wrap("a b c", None), vec!["a b c"]);
+        assert_eq!(wrap("a\n\nb", None), vec!["a", "", "b"]);
     }
 }

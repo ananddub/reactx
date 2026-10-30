@@ -9,5 +9,8 @@ mod checkbox;
 mod harness;
 mod input;
 mod router;
+mod screen_reader;
 mod store;
 mod tabs;
+mod transform;
+mod visual;

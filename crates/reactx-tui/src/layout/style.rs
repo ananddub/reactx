@@ -86,6 +86,7 @@ pub(super) fn taffy_style(node: &TuiNode, is_leaf: bool, is_root: bool) -> Style
         width: dimension(attrs.max_width),
         height: dimension(attrs.max_height),
     };
+    style.aspect_ratio = attrs.aspect_ratio;
 
     let kind = widget_kind(node);
     if is_text_input(node) && attrs.width.is_none() && attrs.min_width.is_none() {

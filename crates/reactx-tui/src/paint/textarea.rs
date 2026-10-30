@@ -4,7 +4,8 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use reactx_core::TuiNode;
-use unicode_width::UnicodeWidthChar;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 use super::cells::{cell_visible, put_line, skip_columns};
 use super::Context;
@@ -40,11 +41,11 @@ pub(super) fn paint_textarea(
             .value
             .as_deref()
             .unwrap_or_default()
-            .chars()
+            .graphemes(true)
             .count()
     });
-    let cursor_chars = cursor.min(value.chars().count());
-    let (caret_row, caret_col) = caret_line_col(&value, cursor_chars);
+    let cursor_index = cursor.min(value.graphemes(true).count());
+    let (caret_row, caret_col) = caret_line_col(&value, cursor_index);
     let rows = area.height as usize;
     let columns = area.width as usize;
     let vscroll = if focused {
@@ -90,8 +91,8 @@ pub(super) fn paint_textarea(
         if let Some((start, end)) = ctx.selections.get(&id).copied() {
             let mut row = 0usize;
             let mut column = 0usize;
-            for (index, ch) in value.chars().enumerate() {
-                if ch == '\n' {
+            for (index, grapheme) in value.graphemes(true).enumerate() {
+                if grapheme == "\n" {
                     row += 1;
                     column = 0;
                     continue;
@@ -111,7 +112,7 @@ pub(super) fn paint_textarea(
                         }
                     }
                 }
-                column += UnicodeWidthChar::width(ch).unwrap_or(0);
+                column += UnicodeWidthStr::width(grapheme);
                 if index > end {
                     break;
                 }
@@ -135,20 +136,31 @@ pub(super) fn paint_textarea(
     }
 }
 
-/// Convert a char offset into a (row, display column) pair.
+/// Convert a grapheme offset into a (row, display column) pair.
 pub(super) fn caret_line_col(value: &str, cursor: usize) -> (usize, usize) {
     let mut row = 0usize;
     let mut column = 0usize;
-    for (index, ch) in value.chars().enumerate() {
+    for (index, grapheme) in value.graphemes(true).enumerate() {
         if index >= cursor {
             break;
         }
-        if ch == '\n' {
+        if grapheme == "\n" {
             row += 1;
             column = 0;
         } else {
-            column += UnicodeWidthChar::width(ch).unwrap_or(0);
+            column += UnicodeWidthStr::width(grapheme);
         }
     }
     (row, column)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::caret_line_col;
+
+    #[test]
+    fn caret_counts_graphemes() {
+        assert_eq!(caret_line_col("a👨‍👩‍👧\nb", 2), (0, 3));
+        assert_eq!(caret_line_col("a👨‍👩‍👧\nb", 3), (1, 0));
+    }
 }
