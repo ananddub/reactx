@@ -76,6 +76,26 @@ fn renders_counter_and_reacts_to_click() {
 }
 
 #[test]
+fn batched_keys_append_to_one_value() {
+    let (mut dom, mut renderer, mut terminal) = setup();
+    let input = renderer
+        .tree
+        .find_first_tag(renderer.tree.root_id(), "input")
+        .expect("input node");
+    renderer.focus.set_focus(Some(input));
+    for ch in ['h', 'i', '!'] {
+        handle_event(&dom, &mut renderer, key(TuiKey::Char(ch)));
+    }
+    dom.render_immediate(&mut renderer);
+    renderer.paint(&mut terminal).unwrap();
+    assert_eq!(
+        renderer.tree.get(input).unwrap().attrs.value.as_deref(),
+        Some("hi!")
+    );
+    assert!(screen(&terminal).contains("hi!"));
+}
+
+#[test]
 fn keyboard_activation_and_typing() {
     let (mut dom, mut renderer, mut terminal) = setup();
     let button = renderer

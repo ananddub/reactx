@@ -13,6 +13,7 @@ mod headless;
 mod modal;
 mod mouse;
 mod rapid;
+mod router_focus;
 mod scroll;
 mod selection;
 mod size;

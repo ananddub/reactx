@@ -35,7 +35,7 @@ pub fn Router(
 
     let current = matched();
     let content = match current.index {
-        Some(index) => (table[index].render)(),
+        Some(index) => table[index].element(),
         None => fallback.unwrap_or_else(|| {
             rsx! {
                 span { style: "color:#f38ba8", "404 — no route matched" }

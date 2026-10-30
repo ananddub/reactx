@@ -54,7 +54,7 @@ rustc-hash = "2"
 
 # Internal crates
 reactx-core = { path = "crates/reactx-core", version = "0.1.1" }
-reactx-tui = { path = "crates/reactx-tui", version = "0.1.1" }
+reactx-tui = { path = "crates/reactx-tui", version = "0.1.2" }
 reactx-ui = { path = "crates/reactx-ui", version = "0.1.2" }
 reactx-async = { path = "crates/reactx-async", version = "0.1.1" }
 reactx-router = { path = "crates/reactx-router", version = "0.1.1" }

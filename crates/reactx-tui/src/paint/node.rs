@@ -40,7 +40,7 @@ pub(super) fn paint(
 
     let fg = node.attrs.color.map(TuiColor::to_ratatui).or(inherited.fg);
     let bg = node.attrs.bg.map(TuiColor::to_ratatui);
-    let mut modifier = inherited.modifier | modifiers(node);
+    let modifier = inherited.modifier | modifiers(node);
     let focused = ctx.focus.is_focused(id);
     let align = node.attrs.text_align.unwrap_or(inherited.align);
     let border = layout::effective_border(node);
@@ -110,10 +110,12 @@ pub(super) fn paint(
         }
         "button" => {
             let text = ctx.tree.collect_text(id);
-            if focused && !bordered {
-                modifier |= Modifier::REVERSED;
-            }
-            let style = content_style.add_modifier(Modifier::BOLD);
+            let emphasis = if focused && !bordered {
+                Modifier::BOLD | Modifier::REVERSED
+            } else {
+                Modifier::BOLD
+            };
+            let style = content_style.add_modifier(emphasis);
             draw_text(
                 buf,
                 interior,

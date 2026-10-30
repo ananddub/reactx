@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "reactx"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dioxus",
  "ratatui",
@@ -1606,7 +1606,7 @@ dependencies = [
 
 [[package]]
 name = "reactx-tui"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64 0.22.1",
  "crossterm",

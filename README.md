@@ -1,5 +1,15 @@
 # ReactX
 
+![agent_chat demo](https://raw.githubusercontent.com/ananddub/reactx/main/docs/agent_chat.gif)
+
+*`agent_chat` example: a coding-CLI-style transcript with streamed thinking,
+tool calls, an answer, mode tabs and a live status line.*
+
+![router screen swap mid-animation](https://raw.githubusercontent.com/ananddub/reactx/main/docs/router_focus.gif)
+
+*`router_focus` example: focus follows a route swap mid-animation — the new
+screen's `autofocus` wins, the old screen unmounts and its ticker stops.*
+
 A React-style terminal UI framework for Rust. Components, hooks and RSX come
 from [Dioxus](https://dioxuslabs.com) 0.6; layout is Flexbox via
 [Taffy](https://github.com/DioxusLabs/taffy); drawing and input run through
@@ -9,7 +19,7 @@ async work runs on [Tokio](https://tokio.rs).
 ```toml
 # Cargo.toml
 [dependencies]
-reactx = "0.1.1"      # { path = "reactx" } when developing inside this repo
+reactx = "0.1.2"      # { path = "reactx" } when developing inside this repo
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -859,6 +869,14 @@ History is in memory. `RouterContext` (from `use_router()`) exposes
 can capture `:name` segments and end in `*` for the remaining path (exposed as
 `rest`); unmatched paths render the router's `fallback` (or a 404 line).
 
+Every matched route mounts in its own component scope, so screen state,
+`use_drop` cleanups and animation tickers belong to that screen: navigating
+away unmounts it and cancels its tickers instead of leaving them running.
+The focus ring is rebuilt from the new screen: focus lands on its `autofocus`
+element (else its first focusable node), Tab cycles inside that screen only,
+and the automatic move during a route change is silent — only real keyboard or
+mouse focus changes dispatch `focus`/`blur` handlers.
+
 ## Global state
 
 ```rust
@@ -889,6 +907,8 @@ cargo run -p reactx --example dashboard    # all data widgets, adapts to termina
 cargo run -p reactx --example tailwind     # Tailwind-style classes, animation, hover/focus/breakpoints
 cargo run -p reactx --example animation    # tweens, springs, <Animate> and screen effects
 cargo run -p reactx --example static_log   # <Static> scrollback above an inline viewport
+cargo run -p reactx --example agent_chat   # self-playing agent chat: thinking, tool calls, composer
+cargo run -p reactx --example router_focus # route swap mid-animation: focus, use_drop, ticker cleanup
 ```
 
 All examples are written with `jsx!` and styled with Tailwind-style utility
@@ -908,6 +928,8 @@ classes. Each example stays under 200 lines and focuses on one feature.
 | `tailwind` | breakpoints, hover/focus/disabled variants, computed classes |
 | `animation` | ticker, tweens/springs, `<Animate>`, screen effects |
 | `static_log` | append-only `<Static>` output above an inline viewport |
+| `agent_chat` | scripted streaming transcript with wheel/arrow scrolling, tool output, Ctrl+O expand, Shift+Tab modes, composer, status bar |
+| `router_focus` | screen swap mid-animation: `autofocus` remap, silent focus move, `use_drop` cleanup, ticker cancellation |
 
 ## Testing
 

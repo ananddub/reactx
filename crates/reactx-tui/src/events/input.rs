@@ -132,7 +132,12 @@ pub(super) fn handle_input_key(
     }
     if changed {
         let next = graphemes.concat();
-        dispatch_form(dom, &renderer.tree, node_id, "input", next);
+        dispatch_form(dom, &renderer.tree, node_id, "input", next.clone());
+        // Batched keys arrive before the next render, so keep the tree value
+        // current or every key would restart from the value of the last frame.
+        if let Some(node) = renderer.tree.get_mut(node_id) {
+            node.attrs.value = Some(next);
+        }
     }
 }
 
