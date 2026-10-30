@@ -141,14 +141,16 @@ jsx! {
 }
 ```
 
-Because widgets encode their defaults as inline styles, a class cannot override
-a property the widget already sets: `Button` owns `bg`, `color`, `border-color`
-and `padding`; `Text` owns `color`; `Input`/`TextArea` own their border and
-colour; `List`/`ListItem` own their border/padding/colour. Use the widget prop
-for those (`Text { color: ... }`, `Button { variant: ... }`, `Gauge { color:
-... }`), and classes for layout, sizing, spacing, colour on raw elements, and
-animation. Raw elements keep the full CSS-like precedence, so `style` beats
-their classes when you need a one-off value.
+Widgets can encode defaults either as classes or as inline styles. `Button`
+emits its variant colours, border and padding as Tailwind classes *before* your
+`class`, so your utilities override them, and it paints no background unless
+you add one. The other widgets still encode some defaults as inline styles,
+which a class cannot override: `Text` owns `color`; `Input`/`TextArea` own
+their border and colour; `List`/`ListItem` own their border/padding/colour. Use
+the widget prop for those (`Text { color: ... }`, `Gauge { color: ... }`), and
+classes for layout, sizing, spacing, colour on raw elements, and animation.
+Raw elements keep the full CSS-like precedence, so `style` beats their classes
+when you need a one-off value.
 
 | Group | Utilities |
 | --- | --- |
@@ -228,7 +230,7 @@ raw `div`/`span` nodes and with each other.
 | `ThemeProvider` | — | `theme: Theme`, children |
 | `Container` | — | `direction`, `justify`, `align`, `gap: Option<u16>`, `padding: Option<String>`, `border: String`, `border_color: String`, `bg`, `color`, `width`, `height`, `flex_grow: Option<f32>`, `title: Option<String>`, `class`, children |
 | `Text` | — | `color`, `align`, `bold`, `italic`, `underline`, `strikethrough`, `dim`, `class`, children |
-| `Button` | `on_click: EventHandler<MouseEvent>` | `variant` (`primary` default, `success`, `danger`, `ghost`), `disabled`, `class`, children |
+| `Button` | `on_click: EventHandler<MouseEvent>` | `variant` (`primary` default, `success`, `danger`, `ghost`; emitted as overridable classes, no background), `disabled`, `class`, children |
 | `Checkbox` | `on_change: EventHandler<bool>` | `checked`, `label`, `class` |
 | `Input` | `on_input: EventHandler<String>` | `on_submit: Option<EventHandler<String>>`, `value`, `placeholder`, `label`, `disabled`, `class` |
 | `TextArea` | `on_input: EventHandler<String>` | `on_submit`, `value`, `placeholder`, `label`, `height: Option<u16>`, `disabled`, `class` |

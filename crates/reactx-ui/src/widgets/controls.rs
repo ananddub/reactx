@@ -5,14 +5,16 @@ use dioxus::prelude::*;
 use crate::theme::use_theme;
 use crate::widgets::{style_flag, style_push};
 
-/// A focusable, themed button. `variant` is `primary` (default), `success`,
-/// `danger` or `ghost`.
+/// A focusable button. `variant` is `primary` (default), `success`, `danger`
+/// or `ghost`. Variant styling is emitted as Tailwind classes before your own
+/// `class`, so any utility you pass wins; no background is painted unless you
+/// ask for one.
 #[component]
 pub fn Button(
     on_click: EventHandler<MouseEvent>,
     #[props(default)] variant: String,
     #[props(default)] disabled: bool,
-    /// Tailwind-style utility classes, applied beneath the inline style.
+    /// Tailwind-style utility classes, applied after the widget defaults.
     #[props(default)]
     class: String,
     children: Element,
@@ -21,31 +23,22 @@ pub fn Button(
     let accent = match variant.as_str() {
         "danger" => theme.red,
         "success" => theme.green,
-        "ghost" => theme.overlay,
         _ => theme.accent,
     };
+    let border = if variant == "ghost" {
+        "border-none".to_string()
+    } else {
+        format!("border rounded border-[{}]", accent.to_css())
+    };
+    let defaults = format!("text-[{}] px-1 bold {border}", theme.text.to_css());
 
     let mut style = String::new();
-    style_push(
-        &mut style,
-        "border",
-        if variant == "ghost" {
-            "none"
-        } else {
-            "rounded"
-        },
-    );
-    style_push(&mut style, "border-color", &accent.to_css());
-    style_push(&mut style, "bg", &theme.surface.to_css());
-    style_push(&mut style, "color", &theme.text.to_css());
-    style_push(&mut style, "padding", "0 1");
-    style_flag(&mut style, "bold", true);
     style_flag(&mut style, "disabled", disabled);
     style_flag(&mut style, "dim", disabled);
 
     rsx! {
         button {
-            class: class,
+            class: format!("{defaults} {class}"),
             style: style,
             onclick: move |event| {
                 if !disabled {

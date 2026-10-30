@@ -21,6 +21,8 @@ fn widgets_forward_classes_to_their_elements() {
 
     let button = harness.node_where(|node| node.tag == "button");
     assert_eq!(harness.attrs(button).text_align, Some(TextAlign::Center));
+    assert_eq!(harness.attrs(button).padding.left, 1.0);
+    assert!(harness.attrs(button).color.is_some());
 
     let text =
         harness.node_where(|node| node.tag == "text" && harness.node_text(node.id) == "Label");
@@ -42,9 +44,14 @@ fn inline_style_beats_classes() {
 
     let container = harness.node_where(|node| node.class.as_deref() == Some("p-4"));
     assert_eq!(harness.attrs(container).padding.top, 1.0);
+}
+
+#[test]
+fn button_classes_beat_variant_defaults() {
+    let harness = Harness::new(precedence_app);
 
     let button = harness.node_where(|node| node.tag == "button");
-    assert_ne!(
+    assert_eq!(
         harness.attrs(button).bg,
         Some(TuiColor::Rgb(0xef, 0x44, 0x44))
     );
